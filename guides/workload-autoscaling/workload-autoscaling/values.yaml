@@ -47,7 +47,7 @@ va:
 
 hpa:
   enabled: true
-  maxReplicas: 10
+  maxReplicas: 1
   targetAverageValue: "1"
 
 vllmService:

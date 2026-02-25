@@ -41,7 +41,7 @@ encode:
       interval: "30s"
   containers:
     - name: "vllm"
-      image: ghcr.io/revit13/vllm-cuda-env:latest
+      image: ghcr.io/llm-d/llm-d-cuda:v0.5.1-rc.4
       modelCommand: imageDefault
       args:
         - "--tensor-parallel-size"
@@ -136,7 +136,7 @@ prefillDecode:
   initContainers: []
   containers:
     - name: "vllm"
-      image: ghcr.io/revit13/vllm-cuda-env:latest
+      image: ghcr.io/llm-d/llm-d-cuda:v0.5.1-rc.4
       modelCommand: imageDefault
       args:
         - "--tensor-parallel-size"

@@ -1,0 +1,128 @@
+environments:
+  istio: &I
+    values:
+      - ../prereq/gateway-provider/common-configurations/istio.yaml
+  kgateway: &KG
+    values:
+      - ../prereq/gateway-provider/common-configurations/kgateway.yaml
+  agentgateway: &AG
+    values:
+      - ../prereq/gateway-provider/common-configurations/agentgateway.yaml
+  gke: &GKE
+    values:
+      - ../prereq/gateway-provider/common-configurations/gke.yaml
+  gke_tpu: &GKETPU
+    <<: *GKE
+  standalone: &STANDALONE
+    values:
+      - provider:
+          name: none
+  xpu: &XPU
+    <<: *I
+  gaudi: &GAUDI
+    <<: *I
+  cpu: &CPU
+    <<: *I
+  digitalocean: &DO
+    <<: *I
+  default: &DEFAULT
+    <<: *I
+
+---
+
+{{- $ns := .Namespace | default "llm-d-e-dp-disaggregation" -}}
+{{- $rn := (env "RELEASE_NAME_POSTFIX") | default "e-dp-disaggregation" -}}
+
+repositories:
+  - name: llm-d-infra
+    url: https://llm-d-incubation.github.io/llm-d-infra/
+
+helmDefaults:
+  wait: true
+  timeout: 600
+  createNamespace: false
+
+hooks:
+  - events: ["presync"]
+    showlogs: true
+    command: "kubectl"
+    args:
+      - "apply"
+      - "-f"
+      - "ec-cache.yaml"
+      - "-n"
+      - {{ $ns | quote }}
+
+releases:
+{{- if ne .Environment.Name "standalone" }}
+  - name: {{ printf "infra-%s" $rn | quote }}
+    namespace: {{ $ns }}
+    chart: llm-d-infra/llm-d-infra
+    version: v1.3.6
+    installed:  true
+    labels:
+      type: infrastructure
+      kind: inference-stack
+    values:
+      - gateway:
+          {{ .Environment.Values.gateway | toYaml | nindent 10 }}
+{{- end }}
+
+  - name: {{ printf "gaie-%s" $rn | quote }}
+    namespace: {{ $ns }}
+    chart: oci://registry.k8s.io/gateway-api-inference-extension/charts/inferencepool
+    version: v1.3.0
+    installed: true
+    needs:
+      {{- if ne .Environment.Name "standalone" }}
+      - {{ printf "infra-%s" $rn | quote }}
+      {{- end }}
+    values:
+      {{- if ne .Environment.Name "standalone" }}
+      - gaie-e-dp-disaggregation/values.yaml
+      {{- else }}
+      - standalone-e-dp-disaggregation/values.yaml
+      {{- end }}
+    # Apply provider name if on GKE
+    {{- if or (eq .Environment.Name "gke") (eq .Environment.Name "gke_tpu") }}
+      - provider:
+          name: {{ .Environment.Values.provider.name }}
+        inferenceExtension:
+          monitoring:
+            gke:
+              enabled: true
+            prometheus:
+              enabled: false
+    {{- end }}
+    # Apply destination rule for anything istio
+    {{- if or (eq .Environment.Name "istio") (eq .Environment.Name "default") (eq .Environment.Name "xpu") (eq .Environment.Name "gaudi") (eq .Environment.Name "cpu") }}
+      - provider:
+          name: {{ .Environment.Values.provider.name }}
+          istio:
+            {{ .Environment.Values.provider.istio | toYaml | nindent 12 }}
+      - provider:
+          istio:
+            destinationRule:
+              host: {{ printf "gaie-%s-epp.%s.svc.cluster.local" $rn $ns | quote }}
+    {{- end }}
+    labels:
+      kind: inference-stack
+
+  - name: {{ printf "ms-%s" $rn | quote }}
+    namespace: {{ $ns }}
+    chart: git::https://github.com/revit13/llm-d-modelservice.git@charts/llm-d-modelservice?ref=e_pd
+    installed: true
+    needs:
+      {{- if ne .Environment.Name "standalone" }}
+      - {{ printf "infra-%s" $rn | quote }}
+      {{- end }}
+      - {{ printf "gaie-%s" $rn | quote }}
+    values:
+      - ms-e-dp-disaggregation/values.yaml
+    set:
+    {{- if or (eq .Environment.Name "gke") (eq .Environment.Name "gke_tpu") }}
+      - name: "decode.monitoring.podmonitor.enabled"
+        value: false
+    {{- end }}
+    labels:
+      kind: inference-stack

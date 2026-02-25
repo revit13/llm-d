@@ -1,0 +1,61 @@
+inferenceExtension:
+  replicas: 1
+  flags:
+    # in vLLM 10.0+, the metric is renamed while upstream GAIE is still using the old name as default.
+    # See https://github.com/kubernetes-sigs/gateway-api-inference-extension/pull/1905.
+    kv-cache-usage-percentage-metric: "vllm:kv_cache_usage_perc"
+  image:
+    # Using dev image with encoder-decode disaggregation support
+    name: llm-d-inference-scheduler
+    hub: ghcr.io/revit13
+    tag: dev
+    pullPolicy: Always
+  extProcPort: 9002
+  # EPP will use this config file (epp-config.yaml) instead of default-plugins.yaml
+  # Both files appear in the ConfigMap, but only the one specified here is loaded
+  pluginsConfigFile: "epp-config.yaml"
+  pluginsCustomConfig:
+    epp-config.yaml: |
+      # EPP configuration for Encoder-Decode-Prefill disaggregation
+      apiVersion: inference.networking.x-k8s.io/v1alpha1
+      kind: EndpointPickerConfig
+      featureGates:
+      - prepareDataPlugins
+      plugins:
+      - type: encoder-header-handler
+      - type: queue-scorer
+      - type: encode-filter
+      - type: decode-filter
+      - type: always-encode-decider
+      - type: ed-profile-handler
+        parameters:
+          deciderPluginName: always-encode-decider
+      schedulingProfiles:
+      - name: encode
+        plugins:
+        - pluginRef: encode-filter
+      - name: decode
+        plugins:
+        - pluginRef: decode-filter
+        - pluginRef: queue-scorer
+          weight: 1
+  monitoring:
+    interval: "10s"
+    # Prometheus ServiceMonitor will be created when enabled for EPP metrics collection
+    secret:
+      name: e-dp-disaggregation-gateway-sa-metrics-reader-secret
+    prometheus:
+      enabled: true
+      auth:
+        # To allow unauthenticated /metrics access (e.g., for debugging with curl), set to false
+        enabled: true
+inferencePool:
+  targetPorts:
+    - number: 8000
+  modelServerType: vllm
+  modelServers:
+    matchLabels:
+      llm-d.ai/inference-serving: "true"
+      llm-d.ai/guide: "e-dp-disaggregation"
+
+# Made with Bob

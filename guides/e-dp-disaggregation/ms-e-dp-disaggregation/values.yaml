@@ -1,0 +1,244 @@
+multinode: false
+
+modelArtifacts:
+  uri: "hf://Qwen/Qwen3-VL-2B-Instruct"
+  name: "Qwen/Qwen3-VL-2B-Instruct"
+  size: 80Gi
+  labels:
+    llm-d.ai/inference-serving: "true"
+    llm-d.ai/guide: "e-dp-disaggregation"
+    llm-d.ai/accelerator-variant: "gpu"
+    llm-d.ai/accelerator-vendor: "nvidia"
+    llm-d.ai/model: "Qwen3Qwen3-VL-2B-Instruct"
+
+routing:
+  servicePort: 8000
+  proxy:
+    enabled: true  # enables sidecar for prefillDecode pod
+    targetPort: 8200  # vLLM port for prefillDecode pod
+    image: ghcr.io/revit13/llm-d-routing-sidecar:dev
+    imagePullPolicy: Always
+    secure: false
+    zapEncoder: json
+    zapLogLevel: debug
+
+accelerator:  # controls specialized hardware Type
+  type: nvidia
+
+# Encoder pod configuration (using 'encode' section)
+# Chart natively supports encode role
+encode:
+  create: true
+  parallelism:
+    tensor: 1
+    data: 1
+  replicas: 1
+  monitoring:
+    podmonitor:
+      enabled: true
+      portName: "vllm"
+      path: "/metrics"
+      interval: "30s"
+  containers:
+    - name: "vllm"
+      image: ghcr.io/revit13/vllm-cuda-env:latest
+      modelCommand: imageDefault
+      args:
+        - "--tensor-parallel-size"
+        - "1"
+        - "--disable-uvicorn-access-log"
+        - "--gpu-memory-utilization=0.95"
+        - "--mm-encoder-only"
+        - "--enforce-eager"
+        - "--ec-transfer-config"
+        - '{"ec_connector": "ECExampleConnector", "ec_role": "ec_producer", "ec_connector_extra_config": {"shared_storage_path": "/shared-ec-cache"}}'
+      ports:
+        - containerPort: 8000
+          name: vllm
+          protocol: TCP
+      env:
+        - name: PORT
+          value: "8000"
+        - name: HUGGINGFACE_HUB_CACHE
+          value: "/data"
+        - name: TRITON_CACHE_DIR
+          value: "/.triton-cache"
+      resources:
+        limits:
+          cpu: '32'
+          memory: 100Gi
+        requests:
+          cpu: '32'
+          memory: 100Gi
+      mountModelVolume: true
+      volumeMounts:
+        - name: ec-cache
+          mountPath: /shared-ec-cache
+        - name: metrics-volume
+          mountPath: /.config
+        - name: shm
+          mountPath: /dev/shm
+        - name: torch-compile-cache
+          mountPath: /.cache
+        - name: triton-cache
+          mountPath: /.triton-cache
+      startupProbe:
+        httpGet:
+          path: /v1/models
+          port: vllm
+        initialDelaySeconds: 15
+        periodSeconds: 30
+        timeoutSeconds: 5
+        failureThreshold: 60
+      livenessProbe:
+        httpGet:
+          path: /health
+          port: vllm
+        periodSeconds: 10
+        timeoutSeconds: 5
+        failureThreshold: 3
+      readinessProbe:
+        httpGet:
+          path: /v1/models
+          port: vllm
+        periodSeconds: 5
+        timeoutSeconds: 2
+        failureThreshold: 3
+  volumes:
+    - name: ec-cache
+      persistentVolumeClaim:
+        claimName: ec-cache-pvc
+    - name: metrics-volume
+      emptyDir: {}
+    - name: torch-compile-cache
+      emptyDir: {}
+    - name: triton-cache
+      emptyDir: {}
+    - name: shm
+      emptyDir:
+        medium: Memory
+        sizeLimit: 20Gi
+
+# Decode-Prefill pod configuration (using 'prefillDecode' section)
+# Chart natively supports prefillDecode role
+prefillDecode:
+  create: true
+  parallelism:
+    tensor: 1
+    data: 1
+  replicas: 1
+  monitoring:
+    podmonitor:
+      enabled: true
+      portName: "vllm"
+      path: "/metrics"
+      interval: "30s"
+  initContainers: []
+  containers:
+    - name: "vllm"
+      image: ghcr.io/revit13/vllm-cuda-env:latest
+      modelCommand: imageDefault
+      args:
+        - "--tensor-parallel-size"
+        - "1"
+        - "--disable-uvicorn-access-log"
+        - "--gpu-memory-utilization=0.95"
+        - "--ec-transfer-config"
+        - '{"ec_connector": "ECExampleConnector", "ec_role": "ec_consumer", "ec_connector_extra_config": {"shared_storage_path": "/shared-ec-cache"}}'
+      ports:
+        - containerPort: 8200
+          name: vllm
+          protocol: TCP
+        - name: rank1
+          containerPort: 8201
+          protocol: TCP
+        - name: rank2
+          containerPort: 8202
+          protocol: TCP
+        - name: rank3
+          containerPort: 8203
+          protocol: TCP
+        - name: rank4
+          containerPort: 8204
+          protocol: TCP
+        - name: rank5
+          containerPort: 8205
+          protocol: TCP
+        - name: rank6
+          containerPort: 8206
+          protocol: TCP
+        - name: rank7
+          containerPort: 8207
+          protocol: TCP
+      env:
+        - name: PORT
+          value: "8200"
+        - name: HUGGINGFACE_HUB_CACHE
+          value: "/data"
+        - name: TRITON_CACHE_DIR
+          value: "/.triton-cache"
+      resources:
+        limits:
+          cpu: '32'
+          memory: 100Gi
+        requests:
+          cpu: '32'
+          memory: 100Gi
+      mountModelVolume: true
+      volumeMounts:
+        - name: ec-cache
+          mountPath: /shared-ec-cache
+        - name: metrics-volume
+          mountPath: /.config
+        - name: shm
+          mountPath: /dev/shm
+        - name: torch-compile-cache
+          mountPath: /.cache
+        - name: triton-cache
+          mountPath: /.triton-cache
+      startupProbe:
+        httpGet:
+          path: /v1/models
+          port: vllm
+        initialDelaySeconds: 15
+        periodSeconds: 30
+        timeoutSeconds: 5
+        failureThreshold: 60
+      livenessProbe:
+        httpGet:
+          path: /health
+          port: vllm
+        periodSeconds: 10
+        timeoutSeconds: 5
+        failureThreshold: 3
+      readinessProbe:
+        httpGet:
+          path: /v1/models
+          port: vllm
+        periodSeconds: 5
+        timeoutSeconds: 2
+        failureThreshold: 3
+  volumes:
+    - name: ec-cache
+      persistentVolumeClaim:
+        claimName: ec-cache-pvc
+    - name: metrics-volume
+      emptyDir: {}
+    - name: torch-compile-cache
+      emptyDir: {}
+    - name: triton-cache
+      emptyDir: {}
+    - name: shm
+      emptyDir:
+        medium: Memory
+        sizeLimit: 20Gi
+
+# Made with Bob
+
+
+# Create ServiceAccount manually since the chart template doesn't support E-DP mode yet
+extraObjects:
+  - apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: ms-e-dp-disaggregation-llm-d-modelservice

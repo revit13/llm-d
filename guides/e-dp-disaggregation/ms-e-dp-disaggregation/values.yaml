@@ -39,10 +39,24 @@ encode:
       portName: "vllm"
       path: "/metrics"
       interval: "30s"
+  initContainers:
+    - name: fix-permissions
+      image: busybox:latest
+      # Changes ownership/permissions so the random OpenShift UID can write
+      command: ["sh", "-c", "chmod -R 777 /shared-ec-cache"]
+      securityContext:
+            runAsUser: 0
+            privileged: true  # This is the magic key for hostPath volumes
+      volumeMounts:
+        - name: ec-cache
+          mountPath: /shared-ec-cache
   containers:
     - name: "vllm"
       image: ghcr.io/llm-d/llm-d-cuda:v0.5.1-rc.4
       modelCommand: imageDefault
+      securityContext:
+              privileged: true
+              runAsUser: 0
       args:
         - "--model=Qwen/Qwen3-VL-2B-Instruct"
         - "--port=8000"
@@ -151,11 +165,24 @@ prefillDecode:
       portName: "vllm"
       path: "/metrics"
       interval: "30s"
-  initContainers: []
+  initContainers:
+    - name: fix-permissions
+      image: busybox:latest
+      # Changes ownership/permissions so the random OpenShift UID can write
+      command: ["sh", "-c", "chmod -R 777 /shared-ec-cache"]
+      securityContext:
+            runAsUser: 0
+            privileged: true  # This is the magic key for hostPath volumes
+      volumeMounts:
+        - name: ec-cache
+          mountPath: /shared-ec-cache
   containers:
     - name: "vllm"
       image: ghcr.io/llm-d/llm-d-cuda:v0.5.1-rc.4
       modelCommand: imageDefault
+      securityContext:
+              privileged: true
+              runAsUser: 0
       args:
         - "--tensor-parallel-size"
         - "1"

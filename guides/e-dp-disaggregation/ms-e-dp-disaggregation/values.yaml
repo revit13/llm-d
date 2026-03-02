@@ -153,6 +153,11 @@ prefillDecode:
     tensor: 1
     data: 1
   replicas: 1
+  podSecurityContext:
+    fsGroup: 1000
+    fsGroupChangePolicy: OnRootMismatch
+    seLinuxOptions:
+      type: spc_t
   monitoring:
     podmonitor:
       enabled: true
@@ -176,8 +181,14 @@ prefillDecode:
       imagePullPolicy: Always
       modelCommand: imageDefault
       securityContext:
-              privileged: true
-              runAsUser: 0
+        runAsNonRoot: true
+        runAsUser: 1000
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+        seccompProfile:
+          type: RuntimeDefault
       args:
         - '--disable-access-log-for-endpoints'
         - '/health,/metrics,/v1/models'

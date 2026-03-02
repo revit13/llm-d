@@ -52,25 +52,19 @@ encode:
           mountPath: /shared-ec-cache
   containers:
     - name: "vllm"
-      image: ghcr.io/llm-d/llm-d-cuda:v0.5.1-rc.4
+      image: vllm/vllm-openai:v0.16.0
+      imagePullPolicy: Always
       modelCommand: imageDefault
       securityContext:
               privileged: true
               runAsUser: 0
       args:
-        - "--model=Qwen/Qwen3-VL-2B-Instruct"
-        - "--port=8000"
-        - "--tensor-parallel-size"
-        - "2"
-        - "--disable-uvicorn-access-log"
-        - "--gpu-memory-utilization=0.01"
-        - "--enforce-eager"
-        - "--disable-log-requests"
-        - "--mm-encoder-only"
-        - "--no-enable-prefix-caching"
-        - "--max-num-batched-tokens=114688" 
-        - "--max-num-seqs=128" 
-        - "--ec-transfer-config"
+        - '--disable-access-log-for-endpoints'
+        - '/health,/metrics,/v1/models'
+        - '--enforce-eager'
+        - '--mm-encoder-only'
+        - '--no-enable-prefix-caching'
+        - '--ec-transfer-config'
         - '{"ec_connector": "ECExampleConnector", "ec_role": "ec_producer", "ec_connector_extra_config": {"shared_storage_path": "/shared-ec-cache"}}'
       ports:
         - containerPort: 8000
@@ -178,17 +172,17 @@ prefillDecode:
           mountPath: /shared-ec-cache
   containers:
     - name: "vllm"
-      image: ghcr.io/llm-d/llm-d-cuda:v0.5.1-rc.4
+      image: vllm/vllm-openai:v0.16.0
+      imagePullPolicy: Always
       modelCommand: imageDefault
       securityContext:
               privileged: true
               runAsUser: 0
       args:
-        - "--tensor-parallel-size"
-        - "1"
-        - "--disable-uvicorn-access-log"
-        - "--gpu-memory-utilization=0.95"
-        - "--ec-transfer-config"
+        - '--disable-access-log-for-endpoints'
+        - '/health,/metrics,/v1/models'
+        - '--gpu-memory-utilization=0.85'
+        - '--ec-transfer-config'
         - '{"ec_connector": "ECExampleConnector", "ec_role": "ec_consumer", "ec_connector_extra_config": {"shared_storage_path": "/shared-ec-cache"}}'
       ports:
         - containerPort: 8200
@@ -289,11 +283,3 @@ prefillDecode:
         sizeLimit: 20Gi
 
 # Made with Bob
-
-
-# Create ServiceAccount manually since the chart template doesn't support E-DP mode yet
-extraObjects:
-  - apiVersion: v1
-    kind: ServiceAccount
-    metadata:
-      name: ms-e-dp-disaggregation-llm-d-modelservice

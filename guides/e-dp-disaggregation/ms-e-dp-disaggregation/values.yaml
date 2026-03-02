@@ -29,6 +29,7 @@ accelerator:  # controls specialized hardware Type
 # Chart natively supports encode role
 encode:
   create: true
+  servedModelName: ""
   parallelism:
     tensor: 2
     data: 1
@@ -149,6 +150,7 @@ encode:
 # Chart natively supports prefillDecode role
 prefillDecode:
   create: true
+  servedModelName: ""
   parallelism:
     tensor: 1
     data: 1
@@ -190,6 +192,8 @@ prefillDecode:
         seccompProfile:
           type: RuntimeDefault
       args:
+        - '--tensor-parallel-size'
+        - '1'
         - '--disable-access-log-for-endpoints'
         - '/health,/metrics,/v1/models'
         - '--gpu-memory-utilization=0.85'

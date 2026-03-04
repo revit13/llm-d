@@ -1,5 +1,9 @@
 multinode: false
 
+# Disable automatic PV/PVC creation - we're using external vllm-shared-storage
+ecCache:
+  create: false
+
 modelArtifacts:
   uri: "hf://Qwen/Qwen3-VL-2B-Instruct"
   name: "Qwen/Qwen3-VL-2B-Instruct"
@@ -34,6 +38,11 @@ encode:
     tensor: 2
     data: 1
   replicas: 1
+  podSecurityContext:
+    fsGroup: 1000
+    fsGroupChangePolicy: OnRootMismatch
+    seLinuxOptions:
+      type: spc_t
   monitoring:
     podmonitor:
       enabled: true
@@ -44,7 +53,7 @@ encode:
     - name: fix-permissions
       image: busybox:latest
       # Changes ownership/permissions so the random OpenShift UID can write
-      command: ["sh", "-c", "chmod -R 777 /shared-ec-cache"]
+      command: ["sh", "-c", "chmod -R 2775 /shared-ec-cache && chown -R 1000:1000 /shared-ec-cache"]
       securityContext:
             runAsUser: 0
             privileged: true  # This is the magic key for hostPath volumes
@@ -57,8 +66,14 @@ encode:
       imagePullPolicy: Always
       modelCommand: imageDefault
       securityContext:
-              privileged: true
-              runAsUser: 0
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
       args:
         - '--disable-access-log-for-endpoints'
         - '/health,/metrics,/v1/models'
@@ -134,7 +149,7 @@ encode:
         sizeLimit: 100Gi
     - name: ec-cache
       persistentVolumeClaim:
-        claimName: ec-cache-pvc
+        claimName: vllm-shared-storage
     - name: metrics-volume
       emptyDir: {}
     - name: torch-compile-cache
@@ -170,7 +185,7 @@ prefillDecode:
     - name: fix-permissions
       image: busybox:latest
       # Changes ownership/permissions so the random OpenShift UID can write
-      command: ["sh", "-c", "chmod -R 777 /shared-ec-cache"]
+      command: ["sh", "-c", "chmod -R 2775 /shared-ec-cache && chown -R 1000:1000 /shared-ec-cache"]
       securityContext:
             runAsUser: 0
             privileged: true  # This is the magic key for hostPath volumes
@@ -285,7 +300,7 @@ prefillDecode:
         sizeLimit: 100Gi
     - name: ec-cache
       persistentVolumeClaim:
-        claimName: ec-cache-pvc
+        claimName: vllm-shared-storage
     - name: metrics-volume
       emptyDir: {}
     - name: torch-compile-cache

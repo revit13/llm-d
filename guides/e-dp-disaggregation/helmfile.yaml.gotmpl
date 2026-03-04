@@ -30,7 +30,7 @@ environments:
 
 ---
 
-{{- $ns := .Namespace | default "llm-d-e-dp-disaggregation" -}}
+{{- $ns := .Namespace | default "default" -}}
 {{- $rn := (env "RELEASE_NAME_POSTFIX") | default "e-dp-disaggregation" -}}
 
 repositories:

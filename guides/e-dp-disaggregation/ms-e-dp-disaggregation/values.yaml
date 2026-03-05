@@ -35,7 +35,7 @@ encode:
   create: true
   servedModelName: ""
   parallelism:
-    tensor: 2
+    tensor: 1
     data: 1
   replicas: 1
   podSecurityContext:

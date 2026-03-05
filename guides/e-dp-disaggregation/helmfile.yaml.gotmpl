@@ -52,6 +52,37 @@ hooks:
       - "ec-cache.yaml"
       - "-n"
       - {{ $ns | quote }}
+  - events: ["postsync"]
+    showlogs: true
+    command: "bash"
+    args:
+      - "-c"
+      - |
+        cat <<EOF | kubectl apply -f - -n {{ $ns }}
+        apiVersion: gateway.networking.k8s.io/v1
+        kind: HTTPRoute
+        metadata:
+          name: {{ printf "llm-d-%s" $rn | quote }}
+        spec:
+          parentRefs:
+          - group: gateway.networking.k8s.io
+            kind: Gateway
+            name: {{ printf "infra-%s-inference-gateway" $rn | quote }}
+          rules:
+          - backendRefs:
+            - group: inference.networking.k8s.io
+              kind: InferencePool
+              name: {{ printf "gaie-%s" $rn | quote }}
+              port: 8000
+              weight: 1
+            matches:
+            - path:
+                type: PathPrefix
+                value: /
+            timeouts:
+              backendRequest: 0s
+              request: 0s
+        EOF
 
 releases:
 {{- if ne .Environment.Name "standalone" }}

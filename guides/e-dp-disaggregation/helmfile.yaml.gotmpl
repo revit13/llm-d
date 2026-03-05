@@ -52,12 +52,15 @@ hooks:
       - "ec-cache.yaml"
       - "-n"
       - {{ $ns | quote }}
-  - events: ["postsync"]
+  - events: ["presync"]
     showlogs: true
-    command: "./apply-httproute.sh"
+    command: "kubectl"
     args:
+      - "apply"
+      - "-f"
+      - "httproute.yaml"
+      - "-n"
       - {{ $ns | quote }}
-      - {{ $rn | quote }}
 
 releases:
 {{- if ne .Environment.Name "standalone" }}

@@ -89,8 +89,6 @@ encode:
       env:
         - name: PORT
           value: "8000"
-        - name: VLLM_USE_V1
-          value: "0"
         - name: HUGGINGFACE_HUB_CACHE
           value: "/data"
         - name: HF_TOKEN

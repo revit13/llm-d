@@ -2,12 +2,11 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: vllm-shared-storage
+  namespace: epd
 spec:
   accessModes:
     - ReadWriteMany
-  storageClassName: nfs-client-pokprod
+  storageClassName: ibm-spectrum-scale-fileset
   resources:
     requests:
       storage: 50Gi
-
-# Made with Bob

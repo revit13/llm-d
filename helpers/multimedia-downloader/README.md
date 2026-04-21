@@ -2,22 +2,36 @@
 
 A pluggable caching proxy designed to speed up the fetching of large multimedia assets like videos, images, and optionally machine learning models.
 
+## Motivation
+
+Multimodal LLM inference workloads constantly fetch heavy assets (images, videos) from remote origins. These repeated "cold" downloads introduce significant latency, spike egress costs, and expose the system to external rate limits and network jitter.
+
+This is particularly impactful in llm-d's
+[disaggregated serving](https://github.com/llm-d/llm-d-inference-scheduler/blob/main/docs/disaggregation.md)
+configurations (E/P/D). In an encode-prefill-decode split, dedicated encode
+workers, prefill pods, and decode pods are scheduled independently and may each
+fetch the same multimedia asset from the origin on the same request — amplifying
+egress costs and download latency proportionally to the number of disaggregated
+components. A shared cluster-local cache eliminates this redundancy: the first
+component to request an asset pays the origin fetch cost; every subsequent
+request across all components in the llm-d ecosystem is served from cache.
+
 ## Supported Implementations
 
 The proxy is designed to support different caching backends, which are maintained in the [`implementations/`](implementations/) directory. Each backend manages its own specific configuration and resource footprints.
 
 * **[Squid](https://github.com/squid-cache/squid) (Default):** A robust, high-performance HTTP/HTTPS caching proxy with two variants:
-  * **[http](implementations/squid/http/)** — HTTP caching proxy (port 8080).
-  * **[https-ssl-bump](implementations/squid/https-ssl-bump/)** — HTTPS caching proxy (port 3128). Requires a custom CA certificate.
+  * **[http](implementations/squid/http/)** — HTTP caching proxy. HTTPS requests are not cached; they are tunneled through an opaque `CONNECT` tunnel with no content inspection.
+  * **[https-ssl-bump](implementations/squid/https-ssl-bump/)** — HTTPS caching proxy. Requires a custom CA certificate and a custum docker image.
 
   For setup instructions see the [Squid Implementation Guide](implementations/squid/README.md).
 
-## Prerequisites
+## Quick Start
+
+### Prerequisites
 
 * **[kind](https://kind.sigs.k8s.io/)**
 * **`kubectl`**
-
-## Quick Start
 
 ### 1. Create a kind Cluster
 
@@ -90,6 +104,8 @@ os.environ['NO_PROXY'] = 'localhost,127.0.0.1,.svc,.cluster.local'
 The base directory contains:
 - [service.yaml](service.yaml) - Base service definition (port 80, `targetPort: http-proxy`)
 - [kustomization.yaml](kustomization.yaml) - References the service and selected implementation
+
+Regardless of the backend's internal port, the proxy always listens on port 80. Therefore, when configuring HTTP_PROXY or HTTPS_PROXY for clients, you must specify port 80.
 
 ### Implementation-Specific Configuration
 

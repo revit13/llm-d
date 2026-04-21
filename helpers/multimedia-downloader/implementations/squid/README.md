@@ -1,6 +1,19 @@
 # Squid Proxy: Multimedia Cache
 
-This Squid proxy implementation caches multimedia content (like images and videos) to optimize data retrieval speeds.
+[Squid](https://www.squid-cache.org/)  is a powerful, open-source caching proxy for HTTP, HTTPS, and FTP traffic, engineered to accelerate content delivery and minimize bandwidth consumption.
+
+Key Capabilities:
+
+📊 Intelligent Eviction - Advanced algorithms ensure optimal use of available cache space.
+
+🚀 Bandwidth Reduction - Utilizes collapsed forwarding to cut origin server load.
+
+💾 Versatile Storage - Supports memory-only, disk-based, or hybrid caching configurations.
+
+📈 Massive Scalability - Maximize single-node hardware with concurrent SMP workers, or distribute load globally via cache hierarchies and external load balancing.
+
+Deployment: Primarily operates as a forward proxy.
+
 
 ## 🚀 Automated Testing
 
@@ -60,8 +73,7 @@ By default, proxies cannot see inside encrypted HTTPS traffic. Here is how Squid
 * **Smart Inspection ([Peek & Splice](https://wiki.squid-cache.org/Features/SslPeekAndSplice)):** Inspects the unencrypted SNI (Server Name Indication) during the TLS handshake. 
     * *Trade-off:* Allows domain-based filtering without requiring full decryption.
 
-**Modern Constraints: TLS 1.3 & ECH**:
-While Squid supports TLS 1.3, new privacy standards like ECH (Encrypted Client Hello) and ESNI encrypt the destination domain itself. Since the proxy cannot see the target to apply policy, these connections must be spliced (passed through blindly) to prevent connection failure.
+> **Note:** While Squid supports TLS 1.3, new privacy standards like ECH (Encrypted Client Hello) and ESNI encrypt the destination domain itself. Since the proxy cannot see the target to apply policy, these connections must be spliced (passed through blindly) to prevent connection failure.
 
 > **Warning:**  SSL Bump breaks end-to-end trust. Always ensure you have legal and compliance approval before intercepting HTTPS traffic.
 

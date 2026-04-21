@@ -95,15 +95,17 @@ To retain resources after testing for manual inspection add `--skip-cleanup` fla
 
 #### OpenShift
 
-The SSL Bump image must be pushed to a registry accessible by your cluster. Run these two steps once each.
+To use the SSL Bump configuration, the custom Squid image must be hosted in a registry that your cluster can access.
+
+**Step 1 - Set your target registry**
 
 ```bash
 export SQUID_IMAGE_REGISTRY="image-registry"
 ```
 
-**Step 1 — build and push the image (run once per image change):**
+**Step 2 — Build and push the image**
 
-`--build-push` implies `--mode ssl-bump`:
+Run this step to build the image and push it to your registry. You only need to do this once, or whenever the image configuration changes. (Note: The --build-push flag automatically sets --mode ssl-bump).
 
 ```bash
 ./helpers/multimedia-downloader/implementations/squid/test/test-squid.sh --build-push
@@ -111,7 +113,7 @@ export SQUID_IMAGE_REGISTRY="image-registry"
 
 Make the pushed image accessible from your cluster, then proceed to step 2.
 
-**Step 2 — deploy and test:**
+**Step 3 — deploy and test**
 
 ```bash
 ./helpers/multimedia-downloader/implementations/squid/test/test-squid.sh --mode ssl-bump --openshift
@@ -131,7 +133,7 @@ To leave OpenShift resources in place after testing for manual inspection add `-
 
 ### Standard HTTP Proxy
 
-**Step 1 — deploy:**
+**Step 1 — deploy**
 
 #### kind
 
@@ -149,7 +151,7 @@ kubectl apply -f helpers/multimedia-downloader/service.yaml
 kubectl rollout status deployment/multimedia-downloader --timeout=120s
 ```
 
-**Step 2 — verify:**
+**Step 2 — verify**
 
 Run two requests through the proxy. The first should be a cache miss, the second a cache hit:
 
@@ -169,7 +171,9 @@ Because SSL Bump intercepts encrypted traffic, it requires a custom CA certifica
 | `kind` | `https-ssl-bump/overlays/kind` | `squid-ssl-bump:local` (locally built) |
 | `openshift` | `https-ssl-bump/overlays/openshift` | your registry — set `$SQUID_IMAGE_REGISTRY` or `--registry` |
 
-**Step 1 — generate the CA certificate** (must exist before deploying — the deployment mounts both secrets):
+**Step 1 — generate the CA certificate**
+
+Because the Squid deployment mounts the certificate secrets, they must exist in the cluster before the deployment process begins.
 
 | Secret | Contents | Mounted by |
 |--------|----------|------------|
@@ -182,15 +186,17 @@ To automatically generate the secrets run:
 ./helpers/multimedia-downloader/implementations/squid/test/generate-ssl-certs.sh
 ```
 
-**Step 2 — deploy:**
+**Step 2 — deploy**
 
-Build the [Dockerfile](docker/Dockerfile.squid-ssl-bump) (required for both platforms):
+First build the [Dockerfile](docker/Dockerfile.squid-ssl-bump) (required for both platforms):
 
 ```bash
 docker build -t squid-ssl-bump:local \
   -f helpers/multimedia-downloader/implementations/squid/docker/Dockerfile.squid-ssl-bump \
   helpers/multimedia-downloader/implementations/squid/docker/
 ```
+
+Next run the following commands depending on the platform:
 
 #### kind
 
@@ -205,6 +211,9 @@ kubectl rollout status deployment/multimedia-downloader --timeout=120s
 
 ```bash
 export SQUID_IMAGE_REGISTRY=<your-registry>
+```
+
+```bash
 docker tag squid-ssl-bump:local ${SQUID_IMAGE_REGISTRY}/squid-ssl-bump:dev
 docker push ${SQUID_IMAGE_REGISTRY}/squid-ssl-bump:dev
 kubectl apply -k helpers/multimedia-downloader/implementations/squid/https-ssl-bump/overlays/openshift
@@ -213,7 +222,7 @@ kubectl apply -f helpers/multimedia-downloader/service.yaml
 kubectl rollout status deployment/multimedia-downloader --timeout=120s
 ```
 
-**Step 3 — verify:**
+**Step 3 — verify**
 
 Deploy the CA-trusting test pod and run two requests. The first should be a cache miss, the second a cache hit:
 

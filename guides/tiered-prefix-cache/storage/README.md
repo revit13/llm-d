@@ -195,8 +195,8 @@ kubectl get httproute -n ${NAMESPACE}
 ```
 
 ```bash
-NAME          HOSTNAMES   AGE
-llm-d-route               17m
+NAME            HOSTNAMES   AGE
+llm-d-infpool               17m
 ```
 
 ### Check the PVC
@@ -208,8 +208,8 @@ kubectl get pvc -n ${NAMESPACE}
 Output should show the PVC as `Bound`:
 
 ```
-NAME         STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
-lustre-pvc   Bound    pvc-3c793698-XXXXXXX   36000Gi    RWX            lustre-class   <unset>                 6d
+NAME         STATUS   VOLUME                  CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+<pvc-name>   Bound    pvc-3c793698-XXXXXXX    18000Gi    RWX            <storage-class>   <unset>              6d
 ```
 
 ### Check the InferencePool
@@ -232,15 +232,63 @@ kubectl get pods -n ${NAMESPACE}
 You should see the InferencePool's endpoint pod and the model server pods in a `Running` state.
 
 ```bash
-NAME                                  READY   STATUS    RESTARTS   AGE
-llm-d-infpool-epp-xxxxxxxx-xxxxx     1/1     Running   0          16m
-llm-d-model-server-xxxxxxxx-xxxxx   1/1     Running   0          11m
-llm-d-model-server-xxxxxxxx-xxxxx   1/1     Running   0          11m
+NAME                                READY   STATUS    RESTARTS   AGE
+llm-d-infpool-epp-xxxxxxxx-xxxxx    1/1     Running   0          16m
+llm-d-decode-xxxxxxxx-xxxxx         1/1     Running   0          11m
+llm-d-decode-xxxxxxxx-xxxxx         1/1     Running   0          11m
+```
+
+### Test inference through the Gateway
+
+The Gateway is a `ClusterIP` Service, so port-forward to call it from outside the cluster:
+
+```bash
+kubectl port-forward -n ${NAMESPACE} svc/llm-d-inference-gateway-istio 8000:80 &
+curl -s http://localhost:8000/v1/models
+curl -s http://localhost:8000/v1/completions \
+  -H 'Content-Type: application/json' \
+  -d '{"model":"Qwen/Qwen3-32B","prompt":"The capital of France is","max_tokens":15,"temperature":0}'
+```
+
+A successful response looks like:
+
+```json
+{"id":"cmpl-...","object":"text_completion","model":"Qwen/Qwen3-32B","choices":[{"index":0,"text":" Paris. ...","finish_reason":"length"}],"usage":{"prompt_tokens":5,"completion_tokens":15,"total_tokens":20}}
 ```
 
 ### Verify KV cache is offloaded to storage
 
 <!-- TABS:START -->
+
+<!-- TAB:llm-d FS Connector -->
+#### llm-d FS Connector
+
+Send a long prompt (one that crosses several `block_size` boundaries) to trigger offload, then inspect the PVC:
+
+```bash
+# Long prompt (~3K tokens)
+PROMPT=$(printf 'Story: '; for i in $(seq 1 800); do printf 'alice met bob and they walked together. '; done)
+curl -s http://localhost:8000/v1/completions \
+  -H 'Content-Type: application/json' \
+  -d "$(printf '{"model":"Qwen/Qwen3-32B","prompt":%s,"max_tokens":3,"temperature":0}' \
+        "$(printf '%s' "$PROMPT" | python3 -c 'import sys,json; print(json.dumps(sys.stdin.read()))')")"
+
+# Check the shared PVC for written blocks
+POD=$(kubectl get pod -n ${NAMESPACE} -l llm-d.ai/role=decode -o jsonpath='{.items[0].metadata.name}')
+kubectl exec -n ${NAMESPACE} ${POD} -- du -sh /mnt/files-storage/kv-cache
+kubectl exec -n ${NAMESPACE} ${POD} -- find /mnt/files-storage/kv-cache -maxdepth 5 -type d
+```
+
+Expected output: `du -sh` shows hundreds of MB to several GB, and `find` lists a path like
+`/mnt/files-storage/kv-cache/<model>/<block-config>/<tp-config>/...`.
+
+You can also confirm via vLLM's offload metrics (exposed at `/metrics` on each pod):
+
+```bash
+kubectl exec -n ${NAMESPACE} ${POD} -- curl -s http://localhost:8000/metrics | grep '^vllm:kv_offload_total_bytes'
+```
+
+A successful offload increments `vllm:kv_offload_total_bytes{transfer_type="GPU_to_SHARED_STORAGE"}`.
 
 <!-- TAB:LMCache Connector -->
 #### LMCache Connector
@@ -250,7 +298,7 @@ You can verify if the KV cache is being offloaded to local storage by checking t
 ```
 export IP=localhost
 export PORT=8000
-export POD_NAME=llm-d-model-server-xxxx-xxxx
+export POD_NAME=llm-d-decode-xxxx-xxxx
 kubectl exec -it $POD_NAME -- curl -i http://${IP}:${PORT}/metrics | grep lmcache:local_storage_usage
 ```
 

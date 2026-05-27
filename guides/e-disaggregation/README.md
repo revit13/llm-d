@@ -53,6 +53,7 @@ Choose between topologies:
 
 ## Prerequisites
 
+- A StorageClass that supports `ReadWriteMany` (RWX) access mode is required for the `shared-ec-cache` PersistentVolumeClaim used to transfer embeddings between encode and decode/prefill workers.
 - Have the [proper client tools installed on your local system](../../helpers/client-setup/README.md) to use this guide.
 - Checkout llm-d repo:
 ```bash
@@ -128,6 +129,9 @@ helm install ${GUIDE_NAME} \
 </details>
 
 ### 2. Deploy the Model Server
+
+ > [!NOTE]
+ > As described in `Prerequisites`, the modelserver bases create a `PersistentVolumeClaim` named `shared-ec-cache` with `accessModes: ReadWriteMany`. Ensure your cluster has an RWX-capable `StorageClass`, or set an appropriate `storageClassName` override for `shared-ec-cache` before deploying.
 
 Apply the Kustomize overlays for your chosen topology:
 

@@ -21,16 +21,16 @@ cd "$TEMP_DIR" || exit
 
 # 3. Clone the repository
 echo "Cloning llm-d repository..."
-git clone https://github.com/revit13/llm-d.git .
+#git clone https://github.com/revit13/llm-d.git .
 
 # 4. Checkout the e_pd branch
 # Note: In git, we 'checkout' branches. 'Namespace' usually refers to k8s.
 echo "Checking out e_pd branch..."
-git checkout e_pd
+@git checkout e_pd
 
 echo "--- Workspace Ready ---"
-echo "Location: $TEMP_DIR"
-cd guides/e-dp-disaggregation
+echo "Location: $TEMP_DIR/home/eres/llm-d/guides/e-dp-disaggregation/"
+cd /home/eres/llm-d/guides/e-dp-disaggregation/guides/e-dp-disaggregation
 ls -F
 
 

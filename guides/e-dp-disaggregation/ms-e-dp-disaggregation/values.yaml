@@ -49,20 +49,9 @@ encode:
       portName: "vllm"
       path: "/metrics"
       interval: "30s"
-  initContainers:
-    - name: fix-permissions
-      image: busybox:latest
-      # Changes ownership/permissions so the random OpenShift UID can write
-      command: ["sh", "-c", "chmod -R 2775 /shared-ec-cache && chown -R 1000:1000 /shared-ec-cache"]
-      securityContext:
-            runAsUser: 0
-            privileged: true  # This is the magic key for hostPath volumes
-      volumeMounts:
-        - name: ec-cache
-          mountPath: /shared-ec-cache
   containers:
     - name: "vllm"
-      image: vllm/vllm-openai:v0.16.0
+      image: ghcr.io/revit13/vllm-openai:nightly-b50646e5effd7cb5884cd96fdff4c53c18521198.omer
       imagePullPolicy: Always
       modelCommand: imageDefault
       securityContext:
@@ -81,7 +70,7 @@ encode:
         - '--mm-encoder-only'
         - '--no-enable-prefix-caching'
         - '--ec-transfer-config'
-        - '{"ec_connector": "ECExampleConnector", "ec_role": "ec_producer", "ec_connector_extra_config": {"shared_storage_path": "/shared-ec-cache"}}'
+        - '{"ec_connector": "ECCPUConnector", "ec_role": "ec_producer"}'
       ports:
         - containerPort: 8000
           name: vllm
@@ -100,17 +89,19 @@ encode:
           value: "/.triton-cache"
       resources:
         limits:
+          nvidia.com/gpu: 2
           cpu: '32'
           memory: 100Gi
+          rdma/roce_gdr: 1
         requests:
+          nvidia.com/gpu: 2
           cpu: '32'
           memory: 100Gi
+          rdma/roce_gdr: 1
       mountModelVolume: true
       volumeMounts:
         - name: hf-cache
           mountPath: /data
-        - name: ec-cache
-          mountPath: /shared-ec-cache
         - name: metrics-volume
           mountPath: /.config
         - name: shm
@@ -145,9 +136,6 @@ encode:
     - name: hf-cache
       emptyDir:
         sizeLimit: 100Gi
-    - name: ec-cache
-      persistentVolumeClaim:
-        claimName: vllm-shared-storage
     - name: metrics-volume
       emptyDir: {}
     - name: torch-compile-cache
@@ -179,20 +167,9 @@ prefillDecode:
       portName: "vllm"
       path: "/metrics"
       interval: "30s"
-  initContainers:
-    - name: fix-permissions
-      image: busybox:latest
-      # Changes ownership/permissions so the random OpenShift UID can write
-      command: ["sh", "-c", "chmod -R 2775 /shared-ec-cache && chown -R 1000:1000 /shared-ec-cache"]
-      securityContext:
-            runAsUser: 0
-            privileged: true  # This is the magic key for hostPath volumes
-      volumeMounts:
-        - name: ec-cache
-          mountPath: /shared-ec-cache
   containers:
     - name: "vllm"
-      image: vllm/vllm-openai:v0.16.0
+      image: ghcr.io/revit13/vllm-openai:nightly-b50646e5effd7cb5884cd96fdff4c53c18521198.omer
       imagePullPolicy: Always
       modelCommand: imageDefault
       securityContext:
@@ -211,7 +188,7 @@ prefillDecode:
         - '/health,/metrics,/v1/models'
         - '--gpu-memory-utilization=0.85'
         - '--ec-transfer-config'
-        - '{"ec_connector": "ECExampleConnector", "ec_role": "ec_consumer", "ec_connector_extra_config": {"shared_storage_path": "/shared-ec-cache"}}'
+        - '{"ec_connector": "ECCPUConnector", "ec_role": "ec_consumer"}'
       ports:
         - containerPort: 8200
           name: vllm
@@ -251,17 +228,19 @@ prefillDecode:
           value: "/.triton-cache"
       resources:
         limits:
+          nvidia.com/gpu: 2
           cpu: '32'
           memory: 100Gi
+          rdma/roce_gdr: 1
         requests:
+          nvidia.com/gpu: 2
           cpu: '32'
           memory: 100Gi
+          rdma/roce_gdr: 1
       mountModelVolume: true
       volumeMounts:
         - name: hf-cache
           mountPath: /data
-        - name: ec-cache
-          mountPath: /shared-ec-cache
         - name: metrics-volume
           mountPath: /.config
         - name: shm
@@ -296,9 +275,6 @@ prefillDecode:
     - name: hf-cache
       emptyDir:
         sizeLimit: 100Gi
-    - name: ec-cache
-      persistentVolumeClaim:
-        claimName: vllm-shared-storage
     - name: metrics-volume
       emptyDir: {}
     - name: torch-compile-cache

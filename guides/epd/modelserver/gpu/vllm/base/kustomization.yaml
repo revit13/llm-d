@@ -7,8 +7,8 @@ namePrefix: epd-nvidia-gpu-vllm-
 
 images:
   - name: REPLACE_MODEL_SERVER_IMAGE
-    newName: vllm/vllm-openai
-    newTag: v0.19.1
+    newName: docker.io/vllm/vllm-openai
+    newTag: v0.19.1-x86_64-cu130
 
 labels:
   - pairs:
@@ -49,7 +49,6 @@ labels:
         path: spec/selector/matchLabels
         create: true
 patches:
-  - path: patch-vllm.yaml
-    target:
-      kind: Deployment
-      name: (encode|prefill|decode)
+  - path: patch-encode.yaml
+  - path: patch-prefill.yaml
+  - path: patch-decode.yaml

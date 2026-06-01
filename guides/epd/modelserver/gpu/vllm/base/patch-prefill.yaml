@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: decode
+  name: prefill
 spec:
   replicas: 1
   template:
@@ -9,36 +9,41 @@ spec:
       containers:
         - name: modelserver
           command: ["vllm", "serve"]
-          # Include all args in overlay patch for consistency
           args:
             - "Qwen/Qwen3-VL-2B-Instruct"
             - "--disable-access-log-for-endpoints=/health,/metrics,/v1/models"
-            - "--tensor-parallel-size=2"
-            - "--gpu-memory-utilization=0.95"
-            # Uncomment for distributed tracing
-            # - "--otlp-traces-endpoint=http://otel-collector:4317"
-            # - "--collect-detailed-traces=all"
-          # env:
-          #   # Uncomment for distributed tracing env vars
-          #   - name: OTEL_SERVICE_NAME
-          #     value: "vllm-decode"
-          #   - name: OTEL_EXPORTER_OTLP_ENDPOINT
-          #     value: "http://otel-collector:4317"
-          #   - name: OTEL_TRACES_EXPORTER
-          #     value: "otlp"
-          #   - name: OTEL_TRACES_SAMPLER
-          #     value: "parentbased_traceidratio"
-          #   - name: OTEL_TRACES_SAMPLER_ARG
-          #     value: "0.1"
+            - "--tensor-parallel-size=1"
+            - "--block-size=128"
+            - "--max-model-len=32000"
+            - "--kv-transfer-config"
+            - '{"kv_connector":"NixlConnector", "kv_role":"kv_both"}'
+            - "--gpu-memory-utilization=0.9"
+          env:
+            - name: VLLM_NIXL_SIDE_CHANNEL_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: HF_HOME
+              value: /model-cache
+            - name: HF_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: llm-d-hf-token
+                  key: HF_TOKEN
+                  optional: true
+          ports:
+            - name: nixl
+              containerPort: 5600
+              protocol: TCP
           resources:
             limits:
-              cpu: '16'
-              memory: 128Gi
-              nvidia.com/gpu: 2
+              cpu: "4"
+              memory: 64Gi
+              nvidia.com/gpu: "1"
             requests:
-              cpu: '8'
-              memory: 96Gi
-              nvidia.com/gpu: 2
+              cpu: "4"
+              memory: 64Gi
+              nvidia.com/gpu: "1"
           volumeMounts:
             - mountPath: /dev/shm
               name: shm
@@ -48,6 +53,8 @@ spec:
               name: triton-cache
             - mountPath: /.config
               name: vllm-config
+            - mountPath: /model-cache
+              name: model-cache
           startupProbe:
             initialDelaySeconds: 15
             periodSeconds: 30
@@ -72,3 +79,6 @@ spec:
           emptyDir: {}
         - name: vllm-config
           emptyDir: {}
+        - name: model-cache
+          emptyDir:
+            sizeLimit: 250Gi

@@ -5,32 +5,57 @@ metadata:
 spec:
   replicas: 1
   template:
+    metadata:
+      annotations:
+        k8s.v1.cni.cncf.io/networks: |
+          [
+            {
+              "name": "multi-nic-compute",
+              "namespace": "openshift-sriov-network-operator"
+            }
+          ]
     spec:
       containers:
         - name: modelserver
-          command: ["vllm", "serve"]
+          command:
+          - vllm
+          - serve
           args:
-            - "Qwen/Qwen3-VL-2B-Instruct"
-            - "--disable-access-log-for-endpoints=/health,/metrics,/v1/models"
-            - "--tensor-parallel-size=1"
-            - "--block-size=128"
-            - "--max-model-len=32000"
-            - "--kv-transfer-config"
-            - '{"kv_connector":"NixlConnector", "kv_role":"kv_both"}'
-            - "--gpu-memory-utilization=0.9"
+          - --model
+          - Qwen/Qwen3-VL-2B-Instruct
+          - --port
+          - "8000"
+          - --tensor-parallel-size
+          - "1"
+          - --block-size
+          - "128"
+          - --kv-transfer-config
+          - '{"kv_connector":"NixlConnector", "kv_role":"kv_both"}'
+          - --disable-uvicorn-access-log
+          - --max-model-len
+          - "32000"
           env:
-            - name: VLLM_NIXL_SIDE_CHANNEL_HOST
-              valueFrom:
-                fieldRef:
-                  fieldPath: status.podIP
-            - name: HF_HOME
-              value: /model-cache
-            - name: HF_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: llm-d-hf-token
-                  key: HF_TOKEN
-                  optional: true
+          - name: VLLM_LOGGING_LEVEL
+            value: DEBUG
+          - name: VLLM_NIXL_SIDE_CHANNEL_HOST
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: status.podIP
+          - name: DP_SIZE
+            value: "1"
+          - name: TP_SIZE
+            value: "1"
+          - name: DP_SIZE_LOCAL
+            value: "1"
+          - name: HF_HOME
+            value: /model-cache
+          - name: HF_TOKEN
+            valueFrom:
+              secretKeyRef:
+                key: HF_TOKEN
+                name: llm-d-hf-token
+                optional: true
           ports:
             - name: nixl
               containerPort: 5600
@@ -40,10 +65,12 @@ spec:
               cpu: "4"
               memory: 64Gi
               nvidia.com/gpu: "1"
+              rdma/roce_gdr: "1"
             requests:
               cpu: "4"
               memory: 64Gi
               nvidia.com/gpu: "1"
+              rdma/roce_gdr: "1"
           volumeMounts:
             - mountPath: /dev/shm
               name: shm

@@ -29,6 +29,8 @@ spec:
           - "128"
           - --kv-transfer-config
           - '{"kv_connector":"NixlConnector", "kv_role":"kv_both"}'
+          - --ec-transfer-config
+          - '{"ec_connector": "ECCPUConnector", "ec_role": "ec_consumer"}'
           - --disable-uvicorn-access-log
           - --max-model-len
           - "32000"
@@ -54,6 +56,12 @@ spec:
                 key: HF_TOKEN
                 name: llm-d-hf-token
                 optional: true
+          - name: UCX_TLS
+            value: ^rc_verbs
+          - name: TRITON_CACHE_DIR
+            value: /.triton-cache
+          - name: VLLM_USE_V1
+            value: "0"
           ports:
             - name: nixl
               containerPort: 5600
@@ -74,7 +82,7 @@ spec:
               name: shm
             - mountPath: /.cache
               name: torch-compile-cache
-            - mountPath: /.triton
+            - mountPath: /.triton-cache
               name: triton-cache
             - mountPath: /.config
               name: vllm-config

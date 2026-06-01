@@ -28,8 +28,6 @@ spec:
             value: "8000"
           - name: VLLM_LOGGING_LEVEL
             value: DEBUG
-          - name: UCX_TLS
-            value: ^rc_verbs
           - name: HF_TOKEN
             valueFrom:
               secretKeyRef:

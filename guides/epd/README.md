@@ -14,7 +14,7 @@ The result:
 
 | Parameter          | Value                                                   |
 | ------------------ | ------------------------------------------------------- |
-| Model              | [Qwen/Qwen3-32B](https://huggingface.co/Qwen/Qwen3-32B) |
+| Model              | [Qwen/Qwen3-VL-2B-Instruct](https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct) |
 | Roles              | encode, prefill, decode                                 |
 | Replicas per role  | 1                                                       |
 | Tensor Parallelism | 2                                                       |
@@ -198,7 +198,7 @@ kubectl run curl-debug --rm -it \
 curl -X POST http://${IP}/v1/completions \
     -H 'Content-Type: application/json' \
     -d '{
-        "model": "Qwen/Qwen3-32B",
+        "model": "Qwen/Qwen3-VL-2B-Instruct",
         "prompt": "How are you today?"
     }' | jq
 ```

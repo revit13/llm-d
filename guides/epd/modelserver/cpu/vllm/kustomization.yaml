@@ -13,7 +13,7 @@ images:
 labels:
   - pairs:
       llm-d.ai/guide: epd
-      llm-d.ai/model: Qwen3-32B
+      llm-d.ai/model: Qwen3-VL-2B-Instruct
       llm-d.ai/accelerator-variant: cpu
       llm-d.ai/accelerator-vendor: intel
     includeSelectors: true

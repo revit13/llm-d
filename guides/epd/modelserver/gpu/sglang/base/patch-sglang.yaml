@@ -10,7 +10,7 @@ spec:
         - name: modelserver
           command: ["python3", "-m", "sglang.launch_server"]
           args:
-            - "--model-path=Qwen/Qwen3-32B"
+            - "--model-path=Qwen/Qwen3-VL-2B-Instruct"
             - "--host=0.0.0.0"
             - "--port=8000"
             - "--enable-metrics"

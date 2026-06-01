@@ -10,7 +10,7 @@ spec:
         - name: modelserver
           command: ["vllm", "serve"]
           args:
-            - "Qwen/Qwen3-32B"
+            - "Qwen/Qwen3-VL-2B-Instruct"
             - "--disable-access-log-for-endpoints=/health,/metrics,/v1/models"
             - "--tensor-parallel-size=2"
             # Uncomment for distributed tracing

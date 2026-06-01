@@ -8,22 +8,44 @@ spec:
     spec:
       containers:
         - name: modelserver
-          command: ["vllm", "serve"]
+          command:
+          - vllm
+          - serve
           args:
-            - "Qwen/Qwen3-VL-2B-Instruct"
-            - "--disable-access-log-for-endpoints=/health,/metrics,/v1/models"
-            - "--tensor-parallel-size=1"
-            - "--max-model-len=32000"
-            - "--gpu-memory-utilization=0.9"
+          - --model
+          - Qwen/Qwen3-VL-2B-Instruct
+          - --port
+          - "8000"
+          - --disable-access-log-for-endpoints
+          - /health,/metrics,/v1/models
+          - --enforce-eager
+          - --mm-encoder-only
+          - --no-enable-prefix-caching
+          - --ec-transfer-config
+          - '{"ec_connector": "ECCPUConnector", "ec_role": "ec_producer"}'
           env:
-            - name: HF_HOME
-              value: /model-cache
-            - name: HF_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: llm-d-hf-token
-                  key: HF_TOKEN
-                  optional: true
+          - name: PORT
+            value: "8000"
+          - name: VLLM_LOGGING_LEVEL
+            value: DEBUG
+          - name: UCX_TLS
+            value: ^rc_verbs
+          - name: HF_TOKEN
+            valueFrom:
+              secretKeyRef:
+                key: HF_TOKEN
+                name: llm-d-hf-token
+                optional: true
+          - name: TRITON_CACHE_DIR
+            value: /.triton
+          - name: VLLM_USE_V1
+            value: "0"
+          - name: DP_SIZE
+            value: "1"
+          - name: DP_SIZE_LOCAL
+            value: "1"
+          - name: HF_HOME
+            value: /model-cache
           resources:
             limits:
               cpu: "4"

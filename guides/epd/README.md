@@ -146,7 +146,16 @@ kubectl apply -n ${NAMESPACE} -k guides/${GUIDE_NAME}/modelserver/cpu/vllm/
 
 </details>
 
-### 3. (Optional) Enable monitoring
+### 3. Deploy the Coordinator
+
+Drives the multimodal `replace-media-urls → render → encode → prefill → decode` pipeline. The configmap references `${NAMESPACE}` and `${PROVIDER_NAME}`, so build with kustomize and pipe through `envsubst` before applying:
+
+```bash
+export PROVIDER_NAME=istio # must match how the gateway was installed
+kustomize build guides/${GUIDE_NAME}/coordinator/ | envsubst | kubectl apply -n ${NAMESPACE} -f -
+```
+
+### 4. (Optional) Enable monitoring
 
 > [!NOTE]
 > GKE provides [automatic application monitoring](https://docs.cloud.google.com/kubernetes-engine/docs/how-to/configure-automatic-application-monitoring) out of the box. The llm-d [Monitoring stack](../../docs/monitoring/README.md) is not required for GKE, but it is available if you prefer to use it.
@@ -211,6 +220,7 @@ To remove the deployed components:
 for ROLE in encode prefill decode; do
   helm uninstall ${GUIDE_NAME}-${ROLE} -n ${NAMESPACE}
 done
+kustomize build guides/${GUIDE_NAME}/coordinator/ | envsubst | kubectl delete -n ${NAMESPACE} -f -
 kubectl delete -n ${NAMESPACE} -k guides/${GUIDE_NAME}/modelserver/gpu/vllm/${INFRA_PROVIDER}
 kubectl delete namespace ${NAMESPACE}
 ```

@@ -151,7 +151,6 @@ kubectl apply -n ${NAMESPACE} -k guides/${GUIDE_NAME}/modelserver/cpu/vllm/
 Drives the multimodal `replace-media-urls → render → encode → prefill → decode` pipeline. The configmap references `${NAMESPACE}` and `${PROVIDER_NAME}`, so build with kustomize and pipe through `envsubst` before applying:
 
 ```bash
-export PROVIDER_NAME=istio # must match how the gateway was installed
 kustomize build guides/${GUIDE_NAME}/coordinator/ | envsubst | kubectl apply -n ${NAMESPACE} -f -
 ```
 

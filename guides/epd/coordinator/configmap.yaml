@@ -22,7 +22,7 @@ data:
 
     pipeline:
       kv_connector: nixlv2
-      ec_connector: shared_storage
+      ec_connector: nixlv2
       steps:
         - type: replace-media-urls
           params:

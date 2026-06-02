@@ -1,6 +1,10 @@
 ## EPD guide overrides for the prefill EPP / InferencePool.
 ## Layer on top of: recipes/router/base.values.yaml
 
+httpRoute:
+  headerMatches:
+    EPP-Phase: prefill
+
 router:
   extraServicePorts:
     - name: http

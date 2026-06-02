@@ -1,6 +1,10 @@
 ## EPD guide overrides for the decode EPP / InferencePool.
 ## Layer on top of: recipes/router/base.values.yaml
 
+httpRoute:
+  headerMatches:
+    EPP-Phase: decode
+
 router:
   extraServicePorts:
     - name: http

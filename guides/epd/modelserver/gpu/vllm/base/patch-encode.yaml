@@ -28,6 +28,13 @@ spec:
             value: "8000"
           - name: VLLM_LOGGING_LEVEL
             value: DEBUG
+          - name: VLLM_EC_SIDE_CHANNEL_HOST
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: status.podIP
+          - name: VLLM_EC_SIDE_CHANNEL_PORT
+            value: "5610"
           - name: HF_TOKEN
             valueFrom:
               secretKeyRef:

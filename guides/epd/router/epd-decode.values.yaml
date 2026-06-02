@@ -13,6 +13,10 @@ router:
       targetPort: 8081
 
   epp:
+    image:
+      registry: ghcr.io/revit13
+      repository: llm-d-router-endpoint-picker
+      tag: ec
     pluginsConfigFile: "epd-plugins.yaml"
     pluginsCustomConfig:
       epd-plugins.yaml: |

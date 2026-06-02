@@ -19,6 +19,8 @@ spec:
             # - "--otlp-traces-endpoint=http://otel-collector:4317"
             # - "--collect-detailed-traces=all"
           env:
+            - name: VLLM_LOGGING_LEVEL
+              value: DEBUG
             - name: VLLM_CPU_KVCACHE_SPACE
               value: "32"
             - name: VLLM_CPU_NUM_OF_RESERVED_CPU

@@ -3,7 +3,7 @@ set -euo pipefail
 
 ENDPOINT="${ENDPOINT:-http://localhost:8080}"
 IMAGE_URL="${IMAGE_URL:-http://images.cocodataset.org/val2017/000000039769.jpg}"
-IMAGE_URL2="${IMAGE_URL2:-https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Gull_portrait_ca_usa.jpg/320px-Gull_portrait_ca_usa.jpg}"
+IMAGE_URL2="${IMAGE_URL2:-https://placedog.net/300/200}"
 MODEL="${MODEL:-Qwen/Qwen3-VL-2B-Instruct}"
 PROMPT="${PROMPT:-What animal is shown in these images?}"
 

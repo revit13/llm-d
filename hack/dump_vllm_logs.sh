@@ -4,7 +4,7 @@ set -euo pipefail
 NAMESPACE="${NAMESPACE:?NAMESPACE must be set}"
 PREFIX="${PREFIX:-epd-nvidia-gpu-vllm}"
 SINCE="${SINCE:-5m}"
-OUT_DIR="${OUT_DIR:-../vllm-logs-$(date +%Y%m%d-%H%M%S)}"
+OUT_DIR="${OUT_DIR:-./vllm-logs-$(date +%Y%m%d-%H%M%S)}"
 
 mkdir -p "${OUT_DIR}"
 

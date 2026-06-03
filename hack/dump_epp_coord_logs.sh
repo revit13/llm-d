@@ -4,7 +4,7 @@ set -euo pipefail
 NAMESPACE="${NAMESPACE:?NAMESPACE must be set}"
 GUIDE_NAME="${GUIDE_NAME:-epd}"
 SINCE="${SINCE:-10m}"
-OUT_DIR="${OUT_DIR:-../epp-logs-$(date +%Y%m%d-%H%M%S)}"
+OUT_DIR="${OUT_DIR:-./epp-logs-$(date +%Y%m%d-%H%M%S)}"
 
 mkdir -p "${OUT_DIR}"
 

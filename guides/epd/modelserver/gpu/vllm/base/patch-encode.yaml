@@ -5,6 +5,15 @@ metadata:
 spec:
   replicas: 1
   template:
+    metadata:
+      annotations:
+        k8s.v1.cni.cncf.io/networks: |
+          [
+            {
+              "name": "multi-nic-compute",
+              "namespace": "openshift-sriov-network-operator"
+            }
+          ]
     spec:
       containers:
         - name: modelserver

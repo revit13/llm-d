@@ -30,4 +30,21 @@ for ROLE in encode prefill decode; do
   done
 done
 
+echo "==> coordinator: collecting logs (since=${SINCE})"
+COORD_PODS=$(kubectl get pods -n "${NAMESPACE}" \
+  -l "app=llm-d-coordinator" \
+  -o jsonpath='{.items[*].metadata.name}')
+
+if [[ -z "${COORD_PODS}" ]]; then
+  echo "    (no coordinator pods found)"
+else
+  for POD in ${COORD_PODS}; do
+    OUT="${OUT_DIR}/coordinator_${POD}.log"
+    echo "    -> ${OUT}"
+    kubectl logs -n "${NAMESPACE}" "${POD}" \
+      -c coordinator \
+      --since="${SINCE}" > "${OUT}" 2>&1 || true
+  done
+fi
+
 echo "Logs written to ${OUT_DIR}"

@@ -65,10 +65,12 @@ spec:
               cpu: "4"
               memory: 64Gi
               nvidia.com/gpu: "1"
+              rdma/roce_gdr: "1"
             requests:
               cpu: "4"
               memory: 64Gi
               nvidia.com/gpu: "1"
+              rdma/roce_gdr: "1"
           volumeMounts:
             - mountPath: /dev/shm
               name: shm

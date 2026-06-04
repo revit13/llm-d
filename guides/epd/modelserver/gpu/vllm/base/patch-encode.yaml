@@ -52,8 +52,6 @@ spec:
                 optional: true
           - name: TRITON_CACHE_DIR
             value: /.triton
-          - name: VLLM_USE_V1
-            value: "0"
           - name: DP_SIZE
             value: "1"
           - name: DP_SIZE_LOCAL

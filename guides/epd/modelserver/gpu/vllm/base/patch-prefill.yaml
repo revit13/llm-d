@@ -58,8 +58,6 @@ spec:
                 optional: true
           - name: TRITON_CACHE_DIR
             value: /.triton-cache
-          - name: VLLM_USE_V1
-            value: "0"
           ports:
             - name: nixl
               containerPort: 5600

@@ -105,5 +105,5 @@ spec:
         - name: vllm-config
           emptyDir: {}
         - name: model-cache
-          emptyDir:
-            sizeLimit: 250Gi
+          persistentVolumeClaim:
+            claimName: llm-d-model-cache

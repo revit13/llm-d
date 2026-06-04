@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: llm-d-model-cache
+  labels:
+    llm-d.ai/guide: epd
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 250Gi
+  storageClassName: ibm-spectrum-scale-fileset
+  volumeMode: Filesystem  

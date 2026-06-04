@@ -105,8 +105,8 @@ spec:
         configMap:
           name: llm-d-coordinator-config
       - name: model-cache
-        emptyDir:
-          sizeLimit: 250Gi
+        persistentVolumeClaim:
+          claimName: llm-d-model-cache
       - name: torch-compile-cache
         emptyDir: {}
       - name: vllm-config

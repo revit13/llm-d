@@ -112,7 +112,21 @@ done
 
 </details>
 
-### 2. Deploy the Model Servers
+### 2. Provision the shared model cache
+
+The three model server pods and the coordinator share a single `PersistentVolumeClaim` (`llm-d-model-cache`) for the HuggingFace model files, so the model is downloaded once and reused. The claim is `ReadWriteMany` and 250Gi.
+
+> [!IMPORTANT]
+> The manifest pins `storageClassName: ibm-spectrum-scale-fileset`, which is specific to the environment this guide was authored on. **Edit `guides/epd/model-cache-pvc.yaml` to use an RWX-capable StorageClass available in your cluster** (e.g. NFS, CephFS, EFS, Azure Files, GCP Filestore) before applying. If your cluster's default StorageClass is RWX-capable, you can remove the `storageClassName` field entirely.
+
+```bash
+kubectl apply -n ${NAMESPACE} -f guides/${GUIDE_NAME}/model-cache-pvc.yaml
+```
+
+> [!NOTE]
+> The first model server pod to start will populate the cache via HuggingFace Hub; subsequent pods reuse it. HF Hub uses lock files to serialize concurrent downloads, but expect the first cold start to be longer than the others.
+
+### 3. Deploy the Model Servers
 
 Apply the Kustomize overlay for your specific backend (defaulting to NVIDIA GPU / vLLM). One overlay deploys all three role-specific model servers (encode, prefill, decode), each as a single replica:
 
@@ -146,7 +160,7 @@ kubectl apply -n ${NAMESPACE} -k guides/${GUIDE_NAME}/modelserver/cpu/vllm/
 
 </details>
 
-### 3. Deploy the Coordinator
+### 4. Deploy the Coordinator
 
 Drives the multimodal `replace-media-urls → render → encode → prefill → decode` pipeline. The configmap references `${NAMESPACE}` and `${PROVIDER_NAME}`, so build with kustomize and pipe through `envsubst` before applying:
 
@@ -154,7 +168,7 @@ Drives the multimodal `replace-media-urls → render → encode → prefill → 
 kustomize build guides/${GUIDE_NAME}/coordinator/ | envsubst | kubectl apply -n ${NAMESPACE} -f -
 ```
 
-### 4. (Optional) Enable monitoring
+### 5. (Optional) Enable monitoring
 
 > [!NOTE]
 > GKE provides [automatic application monitoring](https://docs.cloud.google.com/kubernetes-engine/docs/how-to/configure-automatic-application-monitoring) out of the box. The llm-d [Monitoring stack](../../docs/monitoring/README.md) is not required for GKE, but it is available if you prefer to use it.
@@ -221,5 +235,6 @@ for ROLE in encode prefill decode; do
 done
 kustomize build guides/${GUIDE_NAME}/coordinator/ | envsubst | kubectl delete -n ${NAMESPACE} -f -
 kubectl delete -n ${NAMESPACE} -k guides/${GUIDE_NAME}/modelserver/gpu/vllm/${INFRA_PROVIDER}
+kubectl delete -n ${NAMESPACE} -f guides/${GUIDE_NAME}/model-cache-pvc.yaml
 kubectl delete namespace ${NAMESPACE}
 ```

@@ -126,7 +126,18 @@ kubectl apply -n ${NAMESPACE} -f guides/${GUIDE_NAME}/model-cache-pvc.yaml
 > [!NOTE]
 > The first model server pod to start will populate the cache via HuggingFace Hub; subsequent pods reuse it. HF Hub uses lock files to serialize concurrent downloads, but expect the first cold start to be longer than the others.
 
-### 3. Deploy the Model Servers
+### 3. Deploy the multimedia downloader (caching proxy)
+
+The coordinator's `replace-media-urls` step routes through an in-cluster Squid proxy that caches origin images/video, eliminating redundant fetches across requests.
+
+```bash
+kubectl apply -n ${NAMESPACE} -k guides/${GUIDE_NAME}/multimedia-downloader
+```
+
+> [!NOTE]
+> HTTP origins are cached; HTTPS origins are tunneled via `CONNECT` and not cached. For HTTPS caching, an SSL-Bump variant exists upstream but requires a custom CA secret and a locally-built image.
+
+### 4. Deploy the Model Servers
 
 Apply the Kustomize overlay for your specific backend (defaulting to NVIDIA GPU / vLLM). One overlay deploys all three role-specific model servers (encode, prefill, decode), each as a single replica:
 
@@ -160,7 +171,7 @@ kubectl apply -n ${NAMESPACE} -k guides/${GUIDE_NAME}/modelserver/cpu/vllm/
 
 </details>
 
-### 4. Deploy the Coordinator
+### 5. Deploy the Coordinator
 
 Drives the multimodal `replace-media-urls → render → encode → prefill → decode` pipeline. The configmap references `${NAMESPACE}` and `${PROVIDER_NAME}`, so build with kustomize and pipe through `envsubst` before applying:
 
@@ -168,7 +179,7 @@ Drives the multimodal `replace-media-urls → render → encode → prefill → 
 kustomize build guides/${GUIDE_NAME}/coordinator/ | envsubst | kubectl apply -n ${NAMESPACE} -f -
 ```
 
-### 5. (Optional) Enable monitoring
+### 6. (Optional) Enable monitoring
 
 > [!NOTE]
 > GKE provides [automatic application monitoring](https://docs.cloud.google.com/kubernetes-engine/docs/how-to/configure-automatic-application-monitoring) out of the box. The llm-d [Monitoring stack](../../docs/monitoring/README.md) is not required for GKE, but it is available if you prefer to use it.
@@ -235,6 +246,7 @@ for ROLE in encode prefill decode; do
 done
 kustomize build guides/${GUIDE_NAME}/coordinator/ | envsubst | kubectl delete -n ${NAMESPACE} -f -
 kubectl delete -n ${NAMESPACE} -k guides/${GUIDE_NAME}/modelserver/gpu/vllm/${INFRA_PROVIDER}
+kubectl delete -n ${NAMESPACE} -k guides/${GUIDE_NAME}/multimedia-downloader
 kubectl delete -n ${NAMESPACE} -f guides/${GUIDE_NAME}/model-cache-pvc.yaml
 kubectl delete namespace ${NAMESPACE}
 ```

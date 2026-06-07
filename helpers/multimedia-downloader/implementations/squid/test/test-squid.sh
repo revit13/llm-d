@@ -24,6 +24,8 @@ USE_OPENSHIFT=false
 KUBE_CONTEXT=""
 NAMESPACE="default"
 REGISTRY="${SQUID_IMAGE_REGISTRY:-}" # Reads from ENV var if set
+# Prebuilt SSL Bump image deployed on OpenShift (no build/push). Override with --image.
+IMAGE="ghcr.io/revit13/squid-ssl-bump:dev"
 BUILD_PUSH=false
 KUSTOMIZE_TMP=""
 
@@ -40,6 +42,7 @@ while [[ $# -gt 0 ]]; do
         --skip-cleanup)     SKIP_CLEANUP=true; shift ;;
         --openshift)        USE_OPENSHIFT=true; shift ;;
         --registry)         REGISTRY="$2"; shift 2 ;;
+        --image)            IMAGE="$2"; shift 2 ;;
         --build-push)       BUILD_PUSH=true; MODE="ssl-bump"; shift ;;
         --context)          KUBE_CONTEXT="$2"; USE_OPENSHIFT=true; shift 2 ;;
         --help|-h)
@@ -66,7 +69,8 @@ case "${MODE}" in
 esac
 
 # Validate dependencies (using short-circuit evaluation for clean code)
-[[ "${MODE}" == "ssl-bump" && ${USE_OPENSHIFT} == true && -z "${REGISTRY}" ]] && { error "--mode ssl-bump --openshift requires a registry. Use --registry or export SQUID_IMAGE_REGISTRY"; exit 1; }
+# OpenShift ssl-bump deploys the prebuilt --image (default ghcr.io/revit13/squid-ssl-bump:dev),
+# so no registry is required here. --build-push still needs a registry to push to.
 [[ ${BUILD_PUSH} == true && -z "${REGISTRY}" ]] && { error "--build-push requires a registry. Use --registry or export SQUID_IMAGE_REGISTRY"; exit 1; }
 
 # --- Core Functions ------------------------------------------------------------
@@ -145,8 +149,9 @@ deploy_squid() {
 
     if [[ ${USE_OPENSHIFT} == true ]]; then
         kustomize_dir="${IMPL_DIR}/overlays/openshift"
-        
-        if [[ "${MODE}" == "ssl-bump" && -n "${REGISTRY}" ]]; then
+
+        if [[ "${MODE}" == "ssl-bump" ]]; then
+            # Deploy the prebuilt --image via a kustomize image override (no build/push).
             KUSTOMIZE_TMP="$(mktemp -d "${IMPL_DIR}/overlays/.tmp-kustomize-XXXXXX")"
             cat > "${KUSTOMIZE_TMP}/kustomization.yaml" <<EOF
 apiVersion: kustomize.config.k8s.io/v1beta1
@@ -155,8 +160,8 @@ resources:
 - ../openshift
 images:
 - name: ubuntu/squid
-  newName: ${REGISTRY}/squid-ssl-bump
-  newTag: ${REMOTE_TAG}
+  newName: ${IMAGE%:*}
+  newTag: ${IMAGE##*:}
 EOF
             kustomize_dir="${KUSTOMIZE_TMP}"
         fi

@@ -11,7 +11,7 @@
 
 set -euo pipefail
 
-NAMESPACE="default"
+NAMESPACE="dpikus-epd8"
 OUT_DIR="squid-ssl-certs"
 ORG="YourOrganization"
 

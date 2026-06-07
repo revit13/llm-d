@@ -118,8 +118,12 @@ setup_cluster() {
     fi
 
     if [[ ${USE_OPENSHIFT} == true ]]; then
-        NAMESPACE="$(kubectl config view --minify --output 'jsonpath={..namespace}' || echo 'default')"
-        echo "  Using OpenShift namespace: ${NAMESPACE}"
+        # Use the current context's namespace. The command succeeds with empty
+        # output (not a non-zero exit) when no namespace is set, so the `||`
+        # fallback never fires; default explicitly on an empty result instead.
+        NAMESPACE="$(kubectl config view --minify --output 'jsonpath={..namespace}' 2>/dev/null)"
+        NAMESPACE="${NAMESPACE:-default}"
+        echo "  Using current namespace: ${NAMESPACE}"
         kubectl config set-context --current --namespace="${NAMESPACE}"
     else
         section "Setting up kind cluster '${CLUSTER_NAME}'"

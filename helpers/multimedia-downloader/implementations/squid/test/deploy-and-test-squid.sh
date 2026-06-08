@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# test-squid.sh — deploys and tests the Squid HTTP or SSL Bump implementation.
+# deploy-and-test-squid.sh — deploys and tests the Squid HTTP or SSL Bump implementation.
 # Usage details available via --help
 
 set -euo pipefail

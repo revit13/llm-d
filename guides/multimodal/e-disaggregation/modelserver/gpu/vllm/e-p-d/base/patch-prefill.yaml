@@ -1,24 +1,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: decode
+  name: prefill
 spec:
-  replicas: 2
+  replicas: 4
   template:
     spec:
       containers:
         - name: modelserver
           command: ["vllm", "serve"]
           args:
-            - "Qwen/Qwen2.5-VL-7B-Instruct"
+            - "Qwen/Qwen3-VL-32B-Instruct"
             - "--disable-access-log-for-endpoints=/health,/metrics,/v1/models"
-            - "--tensor-parallel-size=4"
+            - "--tensor-parallel-size=1"
             - "--block-size=128"
             - "--trust-remote-code"
             - "--kv-transfer-config"
             - '{"kv_connector":"NixlConnector", "kv_role":"kv_both"}'
             - "--no-disable-hybrid-kv-cache-manager"
-            - "--port=8200"
+            - "--gpu-memory-utilization=0.9"
+            - "--ec-transfer-config"
+            - '{"ec_connector": "ECCPUConnector", "ec_role": "ec_consumer"}'
           env:
             - name: VLLM_NIXL_SIDE_CHANNEL_HOST
               valueFrom:
@@ -26,13 +28,13 @@ spec:
                   fieldPath: status.podIP
           resources:
             limits:
-              cpu: "16"
-              memory: 64Gi
-              nvidia.com/gpu: "4"
+              cpu: "8"
+              memory: 16Gi
+              nvidia.com/gpu: "1"
             requests:
-              cpu: "16"
-              memory: 64Gi
-              nvidia.com/gpu: "4"
+              cpu: "8"
+              memory: 16Gi
+              nvidia.com/gpu: "1"
           volumeMounts:
             - mountPath: /dev/shm
               name: shm
@@ -42,6 +44,8 @@ spec:
               name: triton-cache
             - mountPath: /.config
               name: config-cache
+            - mountPath: /shared-ec-cache
+              name: shared-ec-cache
           startupProbe:
             initialDelaySeconds: 15
             periodSeconds: 30
@@ -66,3 +70,6 @@ spec:
           emptyDir: {}
         - name: config-cache
           emptyDir: {}
+        - name: shared-ec-cache
+          persistentVolumeClaim:
+            claimName: shared-ec-cache

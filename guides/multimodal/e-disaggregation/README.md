@@ -2,7 +2,7 @@
 
 ## Overview
 
-This experimental guide deploys `Qwen/Qwen2.5-VL-7B-Instruct` with encode disaggregation for multimodal inference workloads. Encode disaggregation offloads the multimodal encoding stage (converting raw images, video, or audio into embeddings) to dedicated workers. The resulting embeddings are then consumed by prefill/decode workers alongside text tokens. When a request contains multiple multimodal entries, they can be processed concurrently by different Encode workers, reducing overall latency.
+This experimental guide deploys `Qwen/Qwen3-VL-32B-Instruct` with encode disaggregation for multimodal inference workloads. Encode disaggregation offloads the multimodal encoding stage (converting raw images, video, or audio into embeddings) to dedicated workers. The resulting embeddings are then consumed by prefill/decode workers alongside text tokens. When a request contains multiple multimodal entries, they can be processed concurrently by different Encode workers, reducing overall latency.
 
 llm-d supports two encode-disaggregated topologies:
 
@@ -22,7 +22,7 @@ llm-d supports two encode-disaggregated topologies:
 In E/PD, dedicated encode workers handle multimodal processing while a single worker type handles both prefill and decode. Multiple encode workers enable parallel processing of multimodal entries within a single request:
 
 * 2 Encode Workers (multimodal encoding, parallelized across entries)
-* 2 TP=1 Decode Workers (prefill + decode combined)
+* 8 TP=2 Decode Workers (prefill + decode combined)
 
 ### E/P/D Configuration
 
@@ -43,7 +43,7 @@ Encode disaggregation is most beneficial for workloads with:
 Choose between topologies:
 
 * **E/PD** - simpler deployment; best when prefill and decode do not need separate scaling, or when the primary bottleneck is encode
-* **E/P/D** - extends the [P/D Disaggregation](../pd-disaggregation/README.md) guide by adding a dedicated encode stage. The reasons for separating prefill from decode (heterogeneous parallelism, xPyD ratios, workload specialization) are described in the [P/D Best Practices](../pd-disaggregation/README.md#pd-best-practices) section
+* **E/P/D** - extends the [P/D Disaggregation](../../pd-disaggregation/README.md) guide by adding a dedicated encode stage. The reasons for separating prefill from decode (heterogeneous parallelism, xPyD ratios, workload specialization) are described in the [P/D Best Practices](../../pd-disaggregation/README.md#pd-best-practices) section
 
 ### Supported Hardware Backends
 
@@ -53,7 +53,7 @@ Choose between topologies:
 
 ## Prerequisites
 
-- Have the [proper client tools installed on your local system](../../helpers/client-setup/README.md) to use this guide.
+- Have the [proper client tools installed on your local system](../../../helpers/client-setup/README.md) to use this guide.
 - Checkout llm-d repo:
 ```bash
 export branch="main" # branch, tag, or commit hash
@@ -64,19 +64,19 @@ git clone https://github.com/llm-d/llm-d.git && cd llm-d && git checkout ${branc
 **For E/PD:**
 ```bash
 export GAIE_VERSION=v1.5.0
-export GUIDE_NAME="e-disaggregation"
+export GUIDE_NAME="multimodal/e-disaggregation"
 export TOPOLOGY="e-pd"
 export NAMESPACE="llm-d-e-pd-disaggregation"
-export MODEL_NAME="Qwen/Qwen2.5-VL-7B-Instruct"
+export MODEL_NAME="Qwen/Qwen3-VL-32B-Instruct"
 ```
 
 **For E/P/D:**
 ```bash
 export GAIE_VERSION=v1.5.0
-export GUIDE_NAME="e-disaggregation"
+export GUIDE_NAME="multimodal/e-disaggregation"
 export TOPOLOGY="e-p-d"
 export NAMESPACE="llm-d-e-p-d-disaggregation"
-export MODEL_NAME="Qwen/Qwen2.5-VL-7B-Instruct"
+export MODEL_NAME="Qwen/Qwen3-VL-32B-Instruct"
 ```
 
 - Install the Gateway API Inference Extension CRDs:
@@ -183,7 +183,7 @@ kubectl run curl-debug --rm -it \
 curl -X POST http://${IP}/v1/chat/completions \
     -H 'Content-Type: application/json' \
     -d '{
-        "model": "Qwen/Qwen2.5-VL-7B-Instruct",
+        "model": "Qwen/Qwen3-VL-32B-Instruct",
         "messages": [
             {
                 "role": "user",
@@ -211,7 +211,7 @@ curl -X POST http://${IP}/v1/chat/completions \
 curl -X POST http://${IP}/v1/chat/completions \
     -H 'Content-Type: application/json' \
     -d '{
-        "model": "Qwen/Qwen2.5-VL-7B-Instruct",
+        "model": "Qwen/Qwen3-VL-32B-Instruct",
         "messages": [
             {
                 "role": "user",

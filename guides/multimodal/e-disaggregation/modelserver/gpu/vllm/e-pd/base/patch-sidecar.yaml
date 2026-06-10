@@ -11,7 +11,7 @@ spec:
             - --port=8000
             - --vllm-port=8200
             - --kv-connector=nixlv2
-            - --ec-connector=ec-example
+            - --ec-connector=ec-nixl
             - --zap-log-level=1
             - --secure-proxy=false
           image: ghcr.io/llm-d/llm-d-routing-sidecar:v0.8.0

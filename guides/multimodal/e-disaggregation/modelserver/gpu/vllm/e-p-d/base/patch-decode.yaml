@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: encode
+  name: decode
 spec:
   replicas: 2
   template:
@@ -10,25 +10,29 @@ spec:
         - name: modelserver
           command: ["vllm", "serve"]
           args:
-            - "Qwen/Qwen2.5-VL-7B-Instruct"
+            - "Qwen/Qwen3-VL-32B-Instruct"
             - "--disable-access-log-for-endpoints=/health,/metrics,/v1/models"
-            - "--tensor-parallel-size=1"
-            - "--gpu-memory-utilization=0.9"
+            - "--tensor-parallel-size=4"
+            - "--block-size=128"
             - "--trust-remote-code"
-            - "--mm-encoder-only"
-            - "--enforce-eager"
-            - "--no-enable-prefix-caching"
-            - "--ec-transfer-config"
-            - '{"ec_connector": "ECExampleConnector", "ec_role": "ec_producer", "ec_connector_extra_config": {"shared_storage_path": "/shared-ec-cache"}}'
+            - "--kv-transfer-config"
+            - '{"kv_connector":"NixlConnector", "kv_role":"kv_both"}'
+            - "--no-disable-hybrid-kv-cache-manager"
+            - "--port=8200"
+          env:
+            - name: VLLM_NIXL_SIDE_CHANNEL_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
           resources:
             limits:
-              cpu: "8"
-              memory: 32Gi
-              nvidia.com/gpu: "1"
+              cpu: "16"
+              memory: 64Gi
+              nvidia.com/gpu: "4"
             requests:
-              cpu: "8"
-              memory: 32Gi
-              nvidia.com/gpu: "1"
+              cpu: "16"
+              memory: 64Gi
+              nvidia.com/gpu: "4"
           volumeMounts:
             - mountPath: /dev/shm
               name: shm
@@ -38,8 +42,6 @@ spec:
               name: triton-cache
             - mountPath: /.config
               name: config-cache
-            - mountPath: /shared-ec-cache
-              name: shared-ec-cache
           startupProbe:
             initialDelaySeconds: 15
             periodSeconds: 30
@@ -64,6 +66,3 @@ spec:
           emptyDir: {}
         - name: config-cache
           emptyDir: {}
-        - name: shared-ec-cache
-          persistentVolumeClaim:
-            claimName: shared-ec-cache

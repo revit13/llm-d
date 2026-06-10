@@ -1,5 +1,9 @@
-
 inferenceExtension:
+  image:
+    registry: ghcr.io/llm-d
+    repository: llm-d-router-endpoint-picker-dev
+    tag: main
+    pullPolicy: Always
   extraServicePorts:
     - name: http
       port: 80

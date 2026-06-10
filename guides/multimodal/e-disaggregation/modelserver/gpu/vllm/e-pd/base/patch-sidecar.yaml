@@ -14,7 +14,7 @@ spec:
             - --ec-connector=ec-nixl
             - --zap-log-level=1
             - --secure-proxy=false
-          image: ghcr.io/llm-d/llm-d-routing-sidecar:v0.8.0
+          image: ghcr.io/revit13/llm-d-router-disagg-sidecar:dev-451239f8c7c6498ae1f9723d5f1ee8058098de93
           imagePullPolicy: Always
           ports:
             - containerPort: 8000

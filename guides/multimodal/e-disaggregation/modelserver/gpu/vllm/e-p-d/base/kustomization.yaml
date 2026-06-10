@@ -3,7 +3,6 @@ kind: Kustomization
 resources:
   - ../../../../../../../recipes/modelserver/base/single-host/pd/vllm
   - encode-deployment.yaml
-  - shared-ec-cache-pvc.yaml
 
 namePrefix: e-p-d-disaggregation-nvidia-gpu-vllm-
 
@@ -46,3 +45,10 @@ patches:
   - path: patch-encode.yaml
   - path: patch-prefill.yaml
   - path: patch-decode.yaml
+  - target:
+      kind: Deployment
+      name: decode
+    patch: |
+      - op: replace
+        path: /spec/template/spec/initContainers/0/image
+        value: ghcr.io/revit13/llm-d-router-disagg-sidecar:dev-451239f8c7c6498ae1f9723d5f1ee8058098de93

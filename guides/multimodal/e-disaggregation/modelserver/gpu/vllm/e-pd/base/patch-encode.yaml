@@ -37,8 +37,6 @@ spec:
               name: triton-cache
             - mountPath: /.config
               name: config-cache
-            - mountPath: /shared-ec-cache
-              name: shared-ec-cache
           startupProbe:
             initialDelaySeconds: 15
             periodSeconds: 30
@@ -63,6 +61,3 @@ spec:
           emptyDir: {}
         - name: config-cache
           emptyDir: {}
-        - name: shared-ec-cache
-          persistentVolumeClaim:
-            claimName: shared-ec-cache

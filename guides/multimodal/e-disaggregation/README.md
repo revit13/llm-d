@@ -64,7 +64,8 @@ git clone https://github.com/llm-d/llm-d.git && cd llm-d && git checkout ${branc
 **For E/PD:**
 ```bash
 export GAIE_VERSION=v1.5.0
-export GUIDE_NAME="multimodal/e-disaggregation"
+export RELEASE_NAME="e-disaggregation"
+export GUIDE_PATH="multimodal/e-disaggregation"
 export TOPOLOGY="e-pd"
 export NAMESPACE="llm-d-e-pd-disaggregation"
 export MODEL_NAME="Qwen/Qwen3-VL-32B-Instruct"
@@ -73,7 +74,8 @@ export MODEL_NAME="Qwen/Qwen3-VL-32B-Instruct"
 **For E/P/D:**
 ```bash
 export GAIE_VERSION=v1.5.0
-export GUIDE_NAME="multimodal/e-disaggregation"
+export RELEASE_NAME="e-disaggregation"
+export GUIDE_PATH="multimodal/e-disaggregation"
 export TOPOLOGY="e-p-d"
 export NAMESPACE="llm-d-e-p-d-disaggregation"
 export MODEL_NAME="Qwen/Qwen3-VL-32B-Instruct"
@@ -98,10 +100,10 @@ This deploys the llm-d Router with an Envoy sidecar, it doesn't set up a Kuberne
 
 ```bash
 export REPO_ROOT=$(realpath $(git rev-parse --show-toplevel))
-helm install ${GUIDE_NAME} \
+helm install ${RELEASE_NAME} \
     oci://registry.k8s.io/gateway-api-inference-extension/charts/standalone \
     -f ${REPO_ROOT}/guides/recipes/router/base.values.yaml \
-    -f ${REPO_ROOT}/guides/${GUIDE_NAME}/router/${TOPOLOGY}-disaggregation.values.yaml \
+    -f ${REPO_ROOT}/guides/${GUIDE_PATH}/router/${TOPOLOGY}-disaggregation.values.yaml \
     -n ${NAMESPACE} --version ${GAIE_VERSION}
 ```
 
@@ -116,11 +118,11 @@ To employ a Kubernetes Gateway managed proxy instead of the standalone one, then
 ```bash
 export REPO_ROOT=$(realpath $(git rev-parse --show-toplevel))
 export PROVIDER_NAME=gke # other: na, agentgateway, or istio
-helm install ${GUIDE_NAME} \
-    oci://registry.k8s.io/gateway-api-inference-extension/charts/inferencepool  \
+helm install ${RELEASE_NAME} \
+    oci://registry.k8s.io/gateway-api-inference-extension/charts/inferencepool \
     -f ${REPO_ROOT}/guides/recipes/router/base.values.yaml \
     -f ${REPO_ROOT}/guides/recipes/router/features/httproute-flags.yaml \
-    -f ${REPO_ROOT}/guides/${GUIDE_NAME}/router/${TOPOLOGY}-disaggregation.values.yaml \
+    -f ${REPO_ROOT}/guides/${GUIDE_PATH}/router/${TOPOLOGY}-disaggregation.values.yaml \
     --set provider.name=${PROVIDER_NAME} \
     -n ${NAMESPACE} --version ${GAIE_VERSION}
 ```
@@ -132,7 +134,7 @@ helm install ${GUIDE_NAME} \
 Apply the Kustomize overlays for your chosen topology:
 
 ```bash
-kubectl apply -n ${NAMESPACE} -k guides/${GUIDE_NAME}/modelserver/gpu/vllm/${TOPOLOGY}/base
+kubectl apply -n ${NAMESPACE} -k guides/${GUIDE_PATH}/modelserver/gpu/vllm/${TOPOLOGY}/base
 ```
 
 ### 3. Enable Monitoring (optional)
@@ -154,7 +156,7 @@ kubectl apply -n ${NAMESPACE} -k guides/recipes/modelserver/components/monitorin
 **Standalone Mode**
 
 ```bash
-export IP=$(kubectl get service ${GUIDE_NAME}-epp -n ${NAMESPACE} -o jsonpath='{.spec.clusterIP}')
+export IP=$(kubectl get service ${RELEASE_NAME}-epp -n ${NAMESPACE} -o jsonpath='{.spec.clusterIP}')
 ```
 
 <details>
@@ -227,8 +229,8 @@ curl -X POST http://${IP}/v1/chat/completions \
 To remove the deployed components:
 
 ```bash
-helm uninstall ${GUIDE_NAME} -n ${NAMESPACE}
-kubectl delete -n ${NAMESPACE} -k guides/${GUIDE_NAME}/modelserver/gpu/vllm/${TOPOLOGY}/base
+helm uninstall ${RELEASE_NAME} -n ${NAMESPACE}
+kubectl delete -n ${NAMESPACE} -k guides/${GUIDE_PATH}/modelserver/gpu/vllm/${TOPOLOGY}/base
 ```
 
 ## Architecture

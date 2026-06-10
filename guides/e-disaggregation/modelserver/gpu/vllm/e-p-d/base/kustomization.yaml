@@ -46,8 +46,3 @@ patches:
   - path: patch-encode.yaml
   - path: patch-prefill.yaml
   - path: patch-decode.yaml
-  # Override base PD sidecar to add ec-connector for encode disaggregation
-  - path: patch-sidecar.yaml
-    target:
-      kind: Deployment
-      name: decode

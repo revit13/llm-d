@@ -66,7 +66,7 @@ git clone https://github.com/llm-d/llm-d.git && cd llm-d && git checkout ${branc
 export GAIE_VERSION=v1.5.0
 export ROUTER_CHART_VERSION=v0
 export RELEASE_NAME="e-disaggregation"
-export GUIDE_PATH="multimodal/e-disaggregation"
+export GUIDE_PATH="multimodal-serving/e-disaggregation"
 export TOPOLOGY="e-pd"
 export NAMESPACE="llm-d-e-pd-disaggregation"
 export MODEL_NAME="Qwen/Qwen3-VL-32B-Instruct"
@@ -77,7 +77,7 @@ export MODEL_NAME="Qwen/Qwen3-VL-32B-Instruct"
 export GAIE_VERSION=v1.5.0
 export ROUTER_CHART_VERSION=v0
 export RELEASE_NAME="e-disaggregation"
-export GUIDE_PATH="multimodal/e-disaggregation"
+export GUIDE_PATH="multimodal-serving/e-disaggregation"
 export TOPOLOGY="e-p-d"
 export NAMESPACE="llm-d-e-p-d-disaggregation"
 export MODEL_NAME="Qwen/Qwen3-VL-32B-Instruct"

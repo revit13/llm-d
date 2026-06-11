@@ -9,7 +9,7 @@ namePrefix: e-pd-disaggregation-nvidia-gpu-vllm-
 images:
   - name: REPLACE_MODEL_SERVER_IMAGE
     newName: ghcr.io/revit13/vllm-openai
-    newTag: e9985ed1e19f18222
+    newTag: 14d40dc7d
 
 labels:
   - pairs:

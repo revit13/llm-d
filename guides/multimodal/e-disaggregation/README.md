@@ -64,6 +64,7 @@ git clone https://github.com/llm-d/llm-d.git && cd llm-d && git checkout ${branc
 **For E/PD:**
 ```bash
 export GAIE_VERSION=v1.5.0
+export ROUTER_CHART_VERSION=v0
 export RELEASE_NAME="e-disaggregation"
 export GUIDE_PATH="multimodal/e-disaggregation"
 export TOPOLOGY="e-pd"
@@ -74,6 +75,7 @@ export MODEL_NAME="Qwen/Qwen3-VL-32B-Instruct"
 **For E/P/D:**
 ```bash
 export GAIE_VERSION=v1.5.0
+export ROUTER_CHART_VERSION=v0
 export RELEASE_NAME="e-disaggregation"
 export GUIDE_PATH="multimodal/e-disaggregation"
 export TOPOLOGY="e-p-d"
@@ -101,10 +103,10 @@ This deploys the llm-d Router with an Envoy sidecar, it doesn't set up a Kuberne
 ```bash
 export REPO_ROOT=$(realpath $(git rev-parse --show-toplevel))
 helm install ${RELEASE_NAME} \
-    oci://registry.k8s.io/gateway-api-inference-extension/charts/standalone \
+    oci://ghcr.io/llm-d/charts/llm-d-router-standalone-dev \
     -f ${REPO_ROOT}/guides/recipes/router/base.values.yaml \
     -f ${REPO_ROOT}/guides/${GUIDE_PATH}/router/${TOPOLOGY}-disaggregation.values.yaml \
-    -n ${NAMESPACE} --version ${GAIE_VERSION}
+    -n ${NAMESPACE} --version ${ROUTER_CHART_VERSION}
 ```
 
 <details>
@@ -119,12 +121,12 @@ To employ a Kubernetes Gateway managed proxy instead of the standalone one, then
 export REPO_ROOT=$(realpath $(git rev-parse --show-toplevel))
 export PROVIDER_NAME=gke # other: na, agentgateway, or istio
 helm install ${RELEASE_NAME} \
-    oci://registry.k8s.io/gateway-api-inference-extension/charts/inferencepool \
+    oci://ghcr.io/llm-d/charts/llm-d-router-gateway-dev \
     -f ${REPO_ROOT}/guides/recipes/router/base.values.yaml \
     -f ${REPO_ROOT}/guides/recipes/router/features/httproute-flags.yaml \
     -f ${REPO_ROOT}/guides/${GUIDE_PATH}/router/${TOPOLOGY}-disaggregation.values.yaml \
     --set provider.name=${PROVIDER_NAME} \
-    -n ${NAMESPACE} --version ${GAIE_VERSION}
+    -n ${NAMESPACE} --version ${ROUTER_CHART_VERSION}
 ```
 
 </details>

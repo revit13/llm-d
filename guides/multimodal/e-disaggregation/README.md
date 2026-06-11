@@ -165,7 +165,7 @@ export IP=$(kubectl get service ${RELEASE_NAME}-epp -n ${NAMESPACE} -o jsonpath=
 <summary> <b>Gateway Mode</b> </summary>
 
 ```bash
-export IP=$(kubectl get gateway llm-d-inference-gateway -n ${NAMESPACE} -o jsonpath='{.status.addresses[0].value}')
+export IP=$(kubectl get service llm-d-inference-gateway-istio -n ${NAMESPACE} -o jsonpath='{.spec.clusterIP}')
 ```
 </details>
 

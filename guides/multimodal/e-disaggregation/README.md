@@ -165,7 +165,7 @@ export IP=$(kubectl get service ${RELEASE_NAME}-epp -n ${NAMESPACE} -o jsonpath=
 <summary> <b>Gateway Mode</b> </summary>
 
 ```bash
-export IP=$(kubectl get service llm-d-inference-gateway-istio -n ${NAMESPACE} -o jsonpath='{.spec.clusterIP}')
+export IP=$(kubectl get gateway llm-d-inference-gateway -n ${NAMESPACE} -o jsonpath='{.status.addresses[0].value}')
 ```
 </details>
 
@@ -234,6 +234,8 @@ To remove the deployed components:
 helm uninstall ${RELEASE_NAME} -n ${NAMESPACE}
 kubectl delete -n ${NAMESPACE} -k guides/${GUIDE_PATH}/modelserver/gpu/vllm/${TOPOLOGY}/base
 ```
+
+If you deployed in Gateway Mode, also remove the Gateway by following [the gateway cleanup guide](../../prereq/gateways).
 
 ## Architecture
 

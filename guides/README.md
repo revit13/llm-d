@@ -33,14 +33,13 @@ We currently offer the following:
 Horizontal, workload-centric paths that compose the capability guides above into a stack tuned for a specific traffic pattern.
 
 * [Agentic Serving](./agentic-serving/README.md) - serve long, multi-turn, tool-using agentic workloads (e.g. coding agents) via a ladder of deployment options that combine prefix-aware routing, KV-cache offloading, and P/D disaggregation.
-* [Multimodal Serving](./multimodal-serving/optimized-baseline/README.md) - Deploy vLLM with multimodal prefix-cache and load-aware routing enabled by the llm-d EPP.
-* [Optimized Baseline](./multimodal-serving/optimized-baseline/README.md) - Deploy vLLM with multimodal prefix-cache and load-aware routing enabled by the llm-d EPP.
-* [Encode Disaggregation](./multimodal/e-disaggregation/README.md) - Offload multimodal encoding (images, video, audio) to dedicated workers via E/PD or E/P/D topologies, freeing prefill/decode resources for text computation.
+* [Multimodal Serving Optimized Baseline](./multimodal-serving/optimized-baseline/README.md) - Deploy vLLM with multimodal prefix-cache and load-aware routing enabled by the llm-d EPP.
 
 ## Experimental Guides
 
 * [Asynchronous Processing](./asynchronous-processing/README.md) - process inference requests asynchronously using a queue-based architecture. This is ideal for latency-insensitive batch workloads or for filling "slack" capacity in your inference pool.
 * [Batch Gateway](./batch-gateway/README.md) - submit, track, and manage large-scale batch inference jobs via an OpenAI-compatible Batch API. Batch Gateway enables efficient processing of batch workloads coexisting with interactive workloads on shared infrastructure.
+* [Encode Disaggregation](./multimodal-serving/e-disaggregation/README.md) - Offload multimodal encoding (images, video, audio) to dedicated workers via E/PD or E/P/D topologies, freeing prefill/decode resources for text computation.
 
 ## Supporting Guides
 

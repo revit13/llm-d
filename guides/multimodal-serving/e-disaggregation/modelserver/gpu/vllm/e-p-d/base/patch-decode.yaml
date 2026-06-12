@@ -6,6 +6,16 @@ spec:
   replicas: 2
   template:
     spec:
+      initContainers:
+        - name: routing-proxy
+          image: ghcr.io/revit13/llm-d-router-disagg-sidecar:dev-451239f8c7c6498ae1f9723d5f1ee8058098de93
+          args:
+            - --port=8000
+            - --vllm-port=8200
+            - --kv-connector=nixlv2
+            - --ec-connector=ec-nixl
+            - --zap-log-level=1
+            - --secure-proxy=false
       containers:
         - name: modelserver
           command: ["vllm", "serve"]
@@ -24,6 +34,11 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.podIP
+            - name: HF_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: llm-d-hf-token
+                  key: HF_TOKEN
           resources:
             limits:
               cpu: "16"

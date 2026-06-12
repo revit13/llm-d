@@ -6,6 +6,26 @@ spec:
   replicas: 8
   template:
     spec:
+      initContainers:
+        - name: routing-proxy
+          args:
+            - --port=8000
+            - --vllm-port=8200
+            - --kv-connector=nixlv2
+            - --ec-connector=ec-nixl
+            - --zap-log-level=1
+            - --secure-proxy=false
+          image: ghcr.io/revit13/llm-d-router-disagg-sidecar:dev-451239f8c7c6498ae1f9723d5f1ee8058098de93
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+              name: sidecar
+              protocol: TCP
+          resources: {}
+          restartPolicy: Always
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
       containers:
         - name: modelserver
           command: ["vllm", "serve"]
@@ -16,6 +36,19 @@ spec:
             - "--port=8200"
             - "--ec-transfer-config"
             - '{"ec_connector": "ECCPUConnector", "ec_role": "ec_consumer"}'
+          env:
+            - name: HF_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: llm-d-hf-token
+                  key: HF_TOKEN
+          ports:
+            - name: modelserver
+              containerPort: 8200
+              protocol: TCP
+            - name: nixl
+              containerPort: 5600
+              protocol: TCP
           resources:
             limits:
               cpu: "16"

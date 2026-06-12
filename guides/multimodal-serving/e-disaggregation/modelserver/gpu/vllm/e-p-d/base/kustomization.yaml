@@ -2,7 +2,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ../../../../../../../recipes/modelserver/base/single-host/pd/vllm
-  - encode-deployment.yaml
+  - ../../common/encode-deployment.yaml
 
 namePrefix: e-p-d-disaggregation-nvidia-gpu-vllm-
 
@@ -42,22 +42,5 @@ labels:
         create: true
 
 patches:
-  - path: patch-encode.yaml
   - path: patch-prefill.yaml
   - path: patch-decode.yaml
-  - target:
-      kind: Deployment
-      name: decode
-    patch: |
-      - op: replace
-        path: /spec/template/spec/initContainers/0/image
-        value: ghcr.io/revit13/llm-d-router-disagg-sidecar:dev-451239f8c7c6498ae1f9723d5f1ee8058098de93
-      - op: replace
-        path: /spec/template/spec/initContainers/0/args
-        value:
-          - --port=8000
-          - --vllm-port=8200
-          - --kv-connector=nixlv2
-          - --ec-connector=ec-nixl
-          - --zap-log-level=1
-          - --secure-proxy=false

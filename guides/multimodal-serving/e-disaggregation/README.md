@@ -70,6 +70,7 @@ export GUIDE_PATH="multimodal-serving/e-disaggregation"
 export TOPOLOGY="e-pd"
 export NAMESPACE="llm-d-e-pd-disaggregation"
 export MODEL_NAME="Qwen/Qwen3-VL-32B-Instruct"
+export REPO_ROOT=$(realpath $(git rev-parse --show-toplevel))
 ```
 
 **For E/P/D:**
@@ -81,6 +82,7 @@ export GUIDE_PATH="multimodal-serving/e-disaggregation"
 export TOPOLOGY="e-p-d"
 export NAMESPACE="llm-d-e-p-d-disaggregation"
 export MODEL_NAME="Qwen/Qwen3-VL-32B-Instruct"
+export REPO_ROOT=$(realpath $(git rev-parse --show-toplevel))
 ```
 
 - Install the Gateway API Inference Extension CRDs:
@@ -92,6 +94,17 @@ kubectl apply -k "https://github.com/kubernetes-sigs/gateway-api-inference-exten
 kubectl create namespace ${NAMESPACE}
 ```
 
+- [Create the `llm-d-hf-token` secret in your target namespace with the key `HF_TOKEN` matching a valid HuggingFace token](../../../helpers/hf-token.md) to pull models.
+<!-- llm-d-cicd:skip start -->
+```bash
+export HF_TOKEN=<your HuggingFace token>
+kubectl create secret generic llm-d-hf-token \
+  --from-literal="HF_TOKEN=${HF_TOKEN}" \
+  --namespace "${NAMESPACE}" \
+  --dry-run=client -o yaml | kubectl apply -f -
+```
+<!-- llm-d-cicd:skip end -->
+
 ## Installation Instructions
 
 ### 1. Deploy the llm-d Router
@@ -101,7 +114,6 @@ kubectl create namespace ${NAMESPACE}
 This deploys the llm-d Router with an Envoy sidecar, it doesn't set up a Kubernetes Gateway.
 
 ```bash
-export REPO_ROOT=$(realpath $(git rev-parse --show-toplevel))
 helm install ${RELEASE_NAME} \
     oci://ghcr.io/llm-d/charts/llm-d-router-standalone-dev \
     -f ${REPO_ROOT}/guides/recipes/router/base.values.yaml \
@@ -118,7 +130,6 @@ To employ a Kubernetes Gateway managed proxy instead of the standalone one, then
 2. *Deploy the llm-d Router and an HTTPRoute*. The following deploys the llm-d Router with an HTTPRoute that connects it to the Gateway created in the previous step (set `provider.name` to the gateway provider you deployed):
 
 ```bash
-export REPO_ROOT=$(realpath $(git rev-parse --show-toplevel))
 export PROVIDER_NAME=gke # other: na, agentgateway, or istio
 helm install ${RELEASE_NAME} \
     oci://ghcr.io/llm-d/charts/llm-d-router-gateway-dev \
@@ -136,7 +147,7 @@ helm install ${RELEASE_NAME} \
 Apply the Kustomize overlays for your chosen topology:
 
 ```bash
-kubectl apply -n ${NAMESPACE} -k guides/${GUIDE_PATH}/modelserver/gpu/vllm/${TOPOLOGY}/base
+kubectl apply -n ${NAMESPACE} -k ${REPO_ROOT}/guides/${GUIDE_PATH}/modelserver/gpu/vllm/${TOPOLOGY}/base
 ```
 
 ### 3. Enable Monitoring (optional)
@@ -148,7 +159,7 @@ kubectl apply -n ${NAMESPACE} -k guides/${GUIDE_PATH}/modelserver/gpu/vllm/${TOP
 - Deploy the monitoring resources for this guide.
 
 ```bash
-kubectl apply -n ${NAMESPACE} -k guides/recipes/modelserver/components/monitoring-pd
+kubectl apply -n ${NAMESPACE} -k ${REPO_ROOT}/guides/recipes/modelserver/components/monitoring-pd
 ```
 
 ## Verification
@@ -232,7 +243,7 @@ To remove the deployed components:
 
 ```bash
 helm uninstall ${RELEASE_NAME} -n ${NAMESPACE}
-kubectl delete -n ${NAMESPACE} -k guides/${GUIDE_PATH}/modelserver/gpu/vllm/${TOPOLOGY}/base
+kubectl delete -n ${NAMESPACE} -k ${REPO_ROOT}/guides/${GUIDE_PATH}/modelserver/gpu/vllm/${TOPOLOGY}/base
 ```
 
 If you deployed in Gateway Mode, also remove the Gateway by following [the gateway cleanup guide](../../prereq/gateways).

@@ -244,7 +244,7 @@ To remove the deployed components:
 
 ```bash
 helm uninstall ${RELEASE_NAME} -n ${NAMESPACE}
-kubectl delete -n ${NAMESPACE} -k ${REPO_ROOT}/guides/${GUIDE_PATH}/modelserver/gpu/vllm/${TOPOLOGY}/base
+kubectl delete -n ${NAMESPACE} -k ${REPO_ROOT}/guides/${GUIDE_PATH}/modelserver/gpu/vllm/${TOPOLOGY}/${INFRA_PROVIDER}/
 ```
 
 If you deployed in Gateway Mode, also remove the Gateway by following [the gateway cleanup guide](../../prereq/gateways).

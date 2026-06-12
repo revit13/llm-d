@@ -251,6 +251,15 @@ If you deployed in Gateway Mode, also remove the Gateway by following [the gatew
 
 ## Architecture
 
+### EC Connector
+The EC Connector is a high-level architectural interface designed to transfer encoder outputs (such as image, video, or audio embeddings) between a dedicated producer (an Encode Worker) and downstream consumers (Prefill or Decode Workers).
+When serving multimodal models, processing the media inputs is highly compute-intensive. 
+The EC Connector allows vLLM to physically separate the "Encode" phase from other phases. 
+Once the Encode Worker processes a multimodal item, the EC Connector handles the orchestration of sharing those resulting embedding references across the network, preventing the Prefill or Decode pods from having to recompute the same visual inputs.
+
+This guide uses ECCPU connector. The ECCPU Connector is a distributed transfer mechanism that allows a consumer vLLM instance to efficiently fetch pre-computed encoder outputs from a remote producer instance 
+using a high-performance NIXL data plane and ZMQ control plane. By sharing these cached outputs across CPU memory-mapped regions, it enables consumer instances to bypass redundant encoding tasks and speed up inference.
+
 ### E/PD Request Flow
 
 ```
@@ -258,7 +267,10 @@ Client -> Envoy -> EPP -> Decode Worker Sidecar
                               |
                               +-> Encode Worker (multimodal content)
                               |       |
-                              |       v (embedding references)
+                              |       | === EC_Connector ===
+                              |       |  ZMQ (Control): XferReq / XferAck
+                              |       |  NIXL (Data): Direct memory write
+                              |       |  v (embedding references)
                               +-> Decode Worker (prefill + decode locally)
                               |
                               v
@@ -271,6 +283,8 @@ Client -> Envoy -> EPP -> Decode Worker Sidecar
 4. Encode Worker processes multimodal content and returns encoding metadata (embedding references)
 5. Decode Worker reads embeddings via EC_Connector and runs prefill + decode locally
 
+The ECCPU Connector is a distributed transfer mechanism that allows a consumer vLLM instance to efficiently fetch pre-computed encoder outputs from a remote producer instance using a high-performance NIXL data plane and ZMQ control plane. 
+By sharing these cached outputs across CPU memory-mapped regions, it enables consumer instances to bypass redundant encoding tasks and speed up inference.
 ### E/P/D Request Flow
 
 ```
@@ -278,7 +292,10 @@ Client -> Envoy -> EPP -> Decode Worker Sidecar
                               |
                               +-> Encode Worker (multimodal content)
                               |       |
-                              |       v (embedding references)
+                              |       | === EC_Connector ===
+                              |       |  ZMQ (Control): XferReq / XferAck
+                              |       |  NIXL (Data): Direct memory write
+                              |       |  v (embedding references)
                               +-> Prefill Worker (reads embeddings, runs prefill)
                               |       |
                               |       v (KV cache transfer)

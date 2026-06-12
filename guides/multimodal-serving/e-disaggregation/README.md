@@ -147,7 +147,8 @@ helm install ${RELEASE_NAME} \
 Apply the Kustomize overlays for your chosen topology:
 
 ```bash
-kubectl apply -n ${NAMESPACE} -k ${REPO_ROOT}/guides/${GUIDE_PATH}/modelserver/gpu/vllm/${TOPOLOGY}/base
+export INFRA_PROVIDER=gke # base | gke
+kubectl apply -n ${NAMESPACE} -k ${REPO_ROOT}/guides/${GUIDE_PATH}/modelserver/gpu/vllm/${TOPOLOGY}/${INFRA_PROVIDER}/
 ```
 
 ### 3. Enable Monitoring (optional)

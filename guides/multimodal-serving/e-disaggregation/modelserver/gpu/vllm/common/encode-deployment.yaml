@@ -59,15 +59,24 @@ spec:
             - mountPath: /.config
               name: config-cache
           startupProbe:
+            httpGet:
+              path: /v1/models
+              port: modelserver
             initialDelaySeconds: 15
             periodSeconds: 30
             timeoutSeconds: 5
             failureThreshold: 120
           livenessProbe:
+            httpGet:
+              path: /health
+              port: modelserver
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 3
           readinessProbe:
+            httpGet:
+              path: /v1/models
+              port: modelserver
             periodSeconds: 5
             timeoutSeconds: 2
             failureThreshold: 3

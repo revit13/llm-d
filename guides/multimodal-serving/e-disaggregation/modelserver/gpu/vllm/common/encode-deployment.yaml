@@ -23,7 +23,6 @@ spec:
             - "Qwen/Qwen3-VL-32B-Instruct"
             - "--disable-access-log-for-endpoints=/health,/metrics,/v1/models"
             - "--tensor-parallel-size=1"
-            - "--gpu-memory-utilization=0.9"
             - "--trust-remote-code"
             - "--mm-encoder-only"
             - "--enforce-eager"

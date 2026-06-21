@@ -13,8 +13,8 @@ images:
   # The model server image must be a vLLM build that supports the
   # ECCPUConnector (NIXL) connector used for encode/prefill/decode
   # disaggregation (see --ec-transfer-config in patch-prefill.yaml,
-  # patch-decode.yaml, and common/encode-deployment.yaml). The upstream
-  # vllm/vllm-openai release does not yet include it, so we pin a dev build.
+  # and common/encode-deployment.yaml). The upstream
+  # vllm/vllm-openai release does not yet include it, so we pin a proprietary build.
   # Switch back to the shared gpu-vllm component once a released vLLM image
   # bundles the ECCPUConnector.
   - name: REPLACE_MODEL_SERVER_IMAGE

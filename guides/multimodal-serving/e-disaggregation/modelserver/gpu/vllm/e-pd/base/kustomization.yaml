@@ -6,10 +6,26 @@ resources:
 
 namePrefix: e-pd-disaggregation-nvidia-gpu-vllm-
 
+components:
+  - ../../../../../../../recipes/modelserver/components/images/routing-sidecar
+
 images:
+  # The model server image must be a vLLM build that supports the
+  # ECCPUConnector (NIXL) connector used for encode/decode disaggregation
+  # (see --ec-transfer-config in patch-decode.yaml and
+  # common/encode-deployment.yaml). The upstream vllm/vllm-openai release
+  # does not yet include it, so we pin a proprietary build. Switch back to the shared
+  # gpu-vllm component once a released vLLM image bundles the ECCPUConnector.
   - name: REPLACE_MODEL_SERVER_IMAGE
     newName: ghcr.io/revit13/vllm-openai
     newTag: 14d40dc7d
+
+  # Override the shared routing-sidecar component (v0.8.0) with the latest
+  # dev build: multimodal e-disaggregation needs NIXL support not yet in a
+  # released sidecar image. Remove this override once the sidecar reaches v0.9.
+  - name: REPLACE_ROUTING_SIDECAR_IMAGE
+    newName: ghcr.io/llm-d/llm-d-router-disagg-sidecar-dev
+    newTag: main
 
 labels:
   - pairs:

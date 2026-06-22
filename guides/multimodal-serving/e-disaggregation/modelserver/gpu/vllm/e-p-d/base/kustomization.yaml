@@ -19,7 +19,7 @@ images:
   # bundles the ECCPUConnector.
   - name: REPLACE_MODEL_SERVER_IMAGE
     newName: ghcr.io/revit13/vllm-openai
-    newTag: 14d40dc7d
+    newTag: 61e53561a
 
   # Override the shared routing-sidecar component (v0.8.0) with the latest
   # dev build: multimodal e-disaggregation needs NIXL support not yet in a

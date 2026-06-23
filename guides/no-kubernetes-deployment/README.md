@@ -17,7 +17,7 @@ and run.
 > [!NOTE]
 > This guide targets **vLLM on NVIDIA GPUs** — the model-server image,
 > CLI flags, and `--gpus` invocation are NVIDIA + vLLM specific. The EPP
-> and Envoy configs are accelerator-agnostic; for AMD, Intel XPU, Gaudi,
+> and Envoy configs are accelerator-agnostic; for AMD, Intel XPU,
 > TPU, or CPU substitute the model-server step with the corresponding
 > backend from the
 > [optimized-baseline modelserver overlays](../optimized-baseline/modelserver/).
@@ -58,10 +58,10 @@ and `no-hit-lru-scorer` (each weight 2), composed by `max-score-picker`.
   `Qwen/Qwen3-32B` on first start.
 
 The EPP binary is built from [`cmd/epp` of the llm-d-router repo][router-repo]
-or pulled from `ghcr.io/llm-d/llm-d-router-endpoint-picker-dev`.
+or pulled from `ghcr.io/llm-d/llm-d-router-endpoint-picker`.
 
 ```bash
-export EPP_IMAGE=ghcr.io/llm-d/llm-d-router-endpoint-picker-dev:main
+export EPP_IMAGE=ghcr.io/llm-d/llm-d-router-endpoint-picker:v0.9.0
 export ENVOY_IMAGE=docker.io/envoyproxy/envoy:distroless-v1.33.2
 export VLLM_IMAGE=vllm/vllm-openai:v0.19.1
 export MODEL=Qwen/Qwen3-32B
@@ -106,8 +106,7 @@ docker run -d --name vllm-0 --gpus '"device=0,1"' \
     "${VLLM_IMAGE}" \
     serve "${MODEL}" \
     --disable-access-log-for-endpoints=/health,/metrics,/v1/models \
-    --tensor-parallel-size=2 \
-    --gpu-memory-utilization=0.95
+    --tensor-parallel-size=2
 ```
 
 The optimized-baseline pod also sets resource requests/limits

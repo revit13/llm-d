@@ -11,13 +11,6 @@ components:
 
 # TODO(#1891): Remove override once upstream vLLM includes encode-disaggregation support.
 images:
-  # The model server image must be a vLLM build that supports the
-  # ECCPUConnector (NIXL) connector used for encode/prefill/decode
-  # disaggregation (see --ec-transfer-config in patch-prefill.yaml,
-  # and common/encode-deployment.yaml). The upstream
-  # vllm/vllm-openai release does not yet include it, so we pin a proprietary build.
-  # TODO(https://github.com/llm-d/llm-d/issues/1905): switch back to the shared
-  # gpu-vllm component once a released vLLM image bundles the ECCPUConnector.
   - name: REPLACE_MODEL_SERVER_IMAGE
     newName: ghcr.io/revit13/vllm-openai
     newTag: 61e53561a

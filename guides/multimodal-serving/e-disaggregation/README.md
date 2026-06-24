@@ -28,9 +28,9 @@ In E/PD, dedicated encode workers handle multimodal processing while a single wo
 
 E/P/D extends P/D disaggregation by adding a dedicated encode stage. This provides maximum specialization, with multiple encode workers processing multimodal content in parallel:
 
-* 2 Encode Workers (multimodal encoding, parallelized across entries)
-* 2 TP=4 Prefill Workers
-* 2 TP=4 Decode Workers
+* 2 Encode Workers (TP=2, multimodal encoding, parallelized across entries)
+* 3 Prefill Workers (TP=2)
+* 3 Decode Workers (TP=2)
 
 ### Best Practices
 
@@ -145,8 +145,14 @@ helm install ${RELEASE_NAME} \
 
 Apply the Kustomize overlays for your chosen topology:
 
+Choose the overlay matching your infrastructure provider:
+- **base**: Platform-agnostic configuration, no accelerator-specific networking.
+- **CoreWeave** (E/P/D only): Adds `rdma/ib` resource for InfiniBand KV cache transfer between Prefill and Decode workers.
+
 ```bash
-export INFRA_PROVIDER=gke # base | gke
+# E/P/D: base | coreweave
+# E/PD:  base
+export INFRA_PROVIDER=base
 kubectl apply -n ${NAMESPACE} -k ${REPO_ROOT}/guides/${GUIDE_PATH}/modelserver/gpu/vllm/${TOPOLOGY}/${INFRA_PROVIDER}/
 ```
 

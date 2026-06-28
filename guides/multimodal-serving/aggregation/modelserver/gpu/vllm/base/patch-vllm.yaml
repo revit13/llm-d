@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: decode
 spec:
-  replicas: 8
+  replicas: 4
   template:
     spec:
       containers:
@@ -14,8 +14,7 @@ spec:
             - "Qwen/Qwen3-VL-32B-Instruct"
             - "--disable-access-log-for-endpoints=/health,/metrics,/v1/models"
             - "--tensor-parallel-size=2"
-            - "--mm-processor-cache-gb"
-            - "20"
+
 
             # Uncomment for distributed tracing
             # - "--otlp-traces-endpoint=http://otel-collector:4317"
@@ -72,7 +71,7 @@ spec:
         - name: shm
           emptyDir:
             medium: Memory
-            sizeLimit: 20Gi
+            sizeLimit: 90Gi
         - name: torch-compile-cache
           emptyDir: {}
         - name: triton-cache

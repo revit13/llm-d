@@ -5,7 +5,7 @@ metadata:
   labels:
     llm-d.ai/role: encode
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       llm-d.ai/role: encode
@@ -20,7 +20,7 @@ spec:
           image: REPLACE_MODEL_SERVER_IMAGE
           command: ["vllm", "serve"]
           args:
-            - "Qwen/Qwen3-VL-32B-Instruct"
+            - "Qwen/Qwen3-VL-235B-A22B-Instruct-FP8"
             - "--disable-access-log-for-endpoints=/health,/metrics,/v1/models"
             - "--tensor-parallel-size=1"
             - "--trust-remote-code"
@@ -42,6 +42,8 @@ spec:
                   fieldPath: status.podIP
             - name: VLLM_EC_SIDE_CHANNEL_PORT
               value: "5610"
+            - name: HF_HOME
+              value: /model-cache
             - name: HF_TOKEN
               valueFrom:
                 secretKeyRef:
@@ -59,12 +61,12 @@ spec:
               protocol: TCP
           resources:
             limits:
-              cpu: "8"
-              memory: 128Gi
+              cpu: "16"
+              memory: 512Gi
               nvidia.com/gpu: "1"
             requests:
-              cpu: "8"
-              memory: 128Gi
+              cpu: "16"
+              memory: 256Gi
               nvidia.com/gpu: "1"
           volumeMounts:
             - mountPath: /dev/shm
@@ -75,6 +77,8 @@ spec:
               name: triton-cache
             - mountPath: /.config
               name: config-cache
+            - mountPath: /model-cache
+              name: model-cache
           startupProbe:
             httpGet:
               path: /v1/models
@@ -108,3 +112,6 @@ spec:
           emptyDir: {}
         - name: config-cache
           emptyDir: {}
+        - name: model-cache
+          persistentVolumeClaim:
+            claimName: model-cache

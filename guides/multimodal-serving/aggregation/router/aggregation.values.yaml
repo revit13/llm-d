@@ -15,32 +15,19 @@ router:
         apiVersion: llm-d.ai/v1alpha1
         kind: EndpointPickerConfig
         plugins:
+        - type: decode-filter
         - type: queue-scorer
-        - type: kv-cache-utilization-scorer
-        - type: prefix-cache-scorer
         - type: no-hit-lru-scorer
-        - type: token-producer
-          parameters:
-            estimate:
-              image:
-                mode: dynamic
-                defaultResolution:
-                  width: 1280
-                  height: 720
-                dynamic:
-                  factor: 1024
-        - type: approx-prefix-cache-producer
+        - type: max-score-picker
         schedulingProfiles:
         - name: default
           plugins:
+          - pluginRef: decode-filter
           - pluginRef: queue-scorer
             weight: 2
-          - pluginRef: kv-cache-utilization-scorer
-            weight: 2
-          - pluginRef: prefix-cache-scorer
-            weight: 3
           - pluginRef: no-hit-lru-scorer
             weight: 2
+          - pluginRef: max-score-picker
 
   modelServers:
     matchLabels:

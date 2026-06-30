@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: decode
 spec:
-  replicas: 4
+  replicas: 2
   template:
     spec:
       initContainers:
@@ -31,13 +31,15 @@ spec:
           command: ["vllm", "serve"]
           imagePullPolicy: Always
           args:
-            - "Qwen/Qwen3-VL-32B-Instruct"
+            - "Qwen/Qwen3-VL-235B-A22B-Instruct-FP8"
             - "--disable-access-log-for-endpoints=/health,/metrics,/v1/models"
-            - "--tensor-parallel-size=2"
+            - "--tensor-parallel-size=4"
             - "--port=8200"
             - "--ec-transfer-config"
             - '{"ec_connector": "ECCPUConnector", "ec_role": "ec_consumer", "ec_connector_extra_config": {"num_ec_blocks": 500000}}'
           env:
+            - name: HF_HOME
+              value: /model-cache
             - name: HF_TOKEN
               valueFrom:
                 secretKeyRef:
@@ -57,12 +59,12 @@ spec:
           resources:
             limits:
               cpu: "16"
-              memory: 256Gi
-              nvidia.com/gpu: "2"
+              memory: 512Gi
+              nvidia.com/gpu: "4"
             requests:
-              cpu: "8"
-              memory: 128Gi
-              nvidia.com/gpu: "2"
+              cpu: "16"
+              memory: 256Gi
+              nvidia.com/gpu: "4"
           volumeMounts:
             - mountPath: /dev/shm
               name: shm
@@ -72,6 +74,8 @@ spec:
               name: triton-cache
             - mountPath: /.config
               name: config-cache
+            - mountPath: /model-cache
+              name: model-cache
           startupProbe:
             initialDelaySeconds: 15
             periodSeconds: 30
@@ -96,3 +100,6 @@ spec:
           emptyDir: {}
         - name: config-cache
           emptyDir: {}
+        - name: model-cache
+          persistentVolumeClaim:
+            claimName: model-cache

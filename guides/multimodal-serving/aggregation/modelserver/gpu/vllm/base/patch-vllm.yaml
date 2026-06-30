@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: decode
 spec:
-  replicas: 4
+  replicas: 2
   template:
     spec:
       containers:
@@ -11,15 +11,17 @@ spec:
           command: ["vllm", "serve"]
           # Include all args in overlay patch for consistency
           args:
-            - "Qwen/Qwen3-VL-32B-Instruct"
+            - "Qwen/Qwen3-VL-235B-A22B-Instruct-FP8"
             - "--disable-access-log-for-endpoints=/health,/metrics,/v1/models"
-            - "--tensor-parallel-size=2"
+            - "--tensor-parallel-size=4"
 
 
             # Uncomment for distributed tracing
             # - "--otlp-traces-endpoint=http://otel-collector:4317"
             # - "--collect-detailed-traces=all"
           env:
+            - name: HF_HOME
+              value: /model-cache
             - name: HF_TOKEN
               valueFrom:
                 secretKeyRef:
@@ -39,12 +41,12 @@ spec:
           resources:
             limits:
               cpu: '16'
-              memory: 256Gi
-              nvidia.com/gpu: 2
+              memory: 512Gi
+              nvidia.com/gpu: 4
             requests:
-              cpu: '8'
-              memory: 128Gi
-              nvidia.com/gpu: 2
+              cpu: '16'
+              memory: 256Gi
+              nvidia.com/gpu: 4
           volumeMounts:
             - mountPath: /dev/shm
               name: shm
@@ -54,6 +56,8 @@ spec:
               name: triton-cache
             - mountPath: /.config
               name: vllm-config
+            - mountPath: /model-cache
+              name: model-cache
           startupProbe:
             initialDelaySeconds: 15
             periodSeconds: 30
@@ -78,3 +82,6 @@ spec:
           emptyDir: {}
         - name: vllm-config
           emptyDir: {}
+        - name: model-cache
+          persistentVolumeClaim:
+            claimName: model-cache

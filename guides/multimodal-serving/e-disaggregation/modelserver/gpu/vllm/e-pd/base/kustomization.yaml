@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - ../../../../../../../recipes/modelserver/base/single-host/default
   - ../../common
+  - model-cache-pvc.yaml
 
 namePrefix: e-pd-disaggregation-nvidia-gpu-vllm-
 
@@ -17,7 +18,7 @@ images:
 
 labels:
   - pairs:
-      llm-d.ai/model: Qwen3-VL-32B-Instruct
+      llm-d.ai/model: Qwen3-VL-235B-A22B-Instruct-FP8
       llm-d.ai/guide: e-disaggregation
       llm-d.ai/accelerator-variant: gpu
       llm-d.ai/accelerator-vendor: nvidia

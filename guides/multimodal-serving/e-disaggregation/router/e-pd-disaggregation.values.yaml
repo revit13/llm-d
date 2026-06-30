@@ -20,11 +20,9 @@ router:
               encode: always-disagg-multimodal-decider
         - type: encode-filter
         - type: decode-filter
-        - type: prefix-cache-scorer
         - type: queue-scorer
-        - type: kv-cache-utilization-scorer
-        - type: active-request-scorer
         - type: max-score-picker
+        - type: no-hit-lru-scorer
         schedulingProfiles:
         - name: encode
           plugins:
@@ -35,11 +33,9 @@ router:
         - name: decode
           plugins:
           - pluginRef: decode-filter
-          - pluginRef: active-request-scorer
+          - pluginRef: queue-scorer
             weight: 2
-          - pluginRef: prefix-cache-scorer
-            weight: 3
-          - pluginRef: kv-cache-utilization-scorer
+          - pluginRef: no-hit-lru-scorer
             weight: 2
           - pluginRef: max-score-picker
 

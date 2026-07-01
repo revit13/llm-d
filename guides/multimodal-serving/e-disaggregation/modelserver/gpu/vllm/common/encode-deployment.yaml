@@ -15,6 +15,13 @@ spec:
         llm-d.ai/role: encode
     spec:
       serviceAccountName: sa
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                llm-d.ai/role: decode
+            topologyKey: kubernetes.io/hostname
       containers:
         - name: modelserver
           image: REPLACE_MODEL_SERVER_IMAGE

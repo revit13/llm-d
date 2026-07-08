@@ -16,16 +16,13 @@ router:
         kind: EndpointPickerConfig
         plugins:
         - type: decode-filter
-        - type: queue-scorer
-        - type: no-hit-lru-scorer
+        - type: active-request-scorer
         - type: max-score-picker
         schedulingProfiles:
         - name: default
           plugins:
           - pluginRef: decode-filter
-          - pluginRef: queue-scorer
-            weight: 2
-          - pluginRef: no-hit-lru-scorer
+          - pluginRef: active-request-scorer
             weight: 2
           - pluginRef: max-score-picker
 

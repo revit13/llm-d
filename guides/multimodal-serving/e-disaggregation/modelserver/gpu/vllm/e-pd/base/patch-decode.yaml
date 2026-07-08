@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: decode
 spec:
-  replicas: 3
+  replicas: 2
   template:
     spec:
       affinity:
@@ -41,6 +41,7 @@ spec:
             - "Qwen/Qwen3-VL-235B-A22B-Instruct-FP8"
             - "--disable-access-log-for-endpoints=/health,/metrics,/v1/models"
             - "--tensor-parallel-size=4"
+            - "--max-model-len=20480"
             - "--port=8200"
             - "--ec-transfer-config"
             - '{"ec_connector": "ECCPUConnector", "ec_role": "ec_consumer", "ec_connector_extra_config": {"num_ec_blocks": 500000}}'

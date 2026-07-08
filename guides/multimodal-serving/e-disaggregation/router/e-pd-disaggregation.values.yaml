@@ -20,22 +20,19 @@ router:
               encode: always-disagg-multimodal-decider
         - type: encode-filter
         - type: decode-filter
-        - type: queue-scorer
+        - type: active-request-scorer
         - type: max-score-picker
-        - type: no-hit-lru-scorer
         schedulingProfiles:
         - name: encode
           plugins:
           - pluginRef: encode-filter
-          - pluginRef: queue-scorer
+          - pluginRef: active-request-scorer
             weight: 2
           - pluginRef: max-score-picker
         - name: decode
           plugins:
           - pluginRef: decode-filter
-          - pluginRef: queue-scorer
-            weight: 2
-          - pluginRef: no-hit-lru-scorer
+          - pluginRef: active-request-scorer
             weight: 2
           - pluginRef: max-score-picker
 

@@ -22,6 +22,7 @@ spec:
             - "Qwen/Qwen3-VL-32B-Instruct"
             - "--disable-access-log-for-endpoints=/health,/metrics,/v1/models"
             - "--tensor-parallel-size=2"
+            - "--max-model-len=20480"
             - "--kv-transfer-config"
             - '{"kv_connector":"NixlConnector", "kv_role":"kv_both", "kv_connector_extra_config": {"kv_lease_duration": 300}}'
             - "--no-disable-hybrid-kv-cache-manager"

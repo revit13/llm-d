@@ -13,7 +13,7 @@ components:
 images:
   - name: REPLACE_MODEL_SERVER_IMAGE
     newName: ghcr.io/revit13/vllm-openai
-    newTag: 61e53561a
+    newTag: 2180bcd43
 
 labels:
   - pairs:

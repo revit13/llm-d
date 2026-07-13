@@ -14,7 +14,7 @@ images:
   # TODO(#1891): Remove override once upstream vLLM includes encode-disaggregation support.
   - name: REPLACE_MODEL_SERVER_IMAGE
     newName: ghcr.io/revit13/vllm-openai
-    newTag: 61e53561a
+    newTag: 2180bcd43
 
 labels:
   - pairs:

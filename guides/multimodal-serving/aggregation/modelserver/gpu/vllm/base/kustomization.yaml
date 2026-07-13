@@ -9,7 +9,7 @@ namePrefix: mm-baseline-nvidia-gpu-vllm-
 images:
   - name: vllm/vllm-openai
     newName: ghcr.io/revit13/vllm-openai
-    newTag: 61e53561a
+    newTag: 2180bcd43
 
 components:
   - ../../../../../../recipes/modelserver/components/images/gpu-vllm
